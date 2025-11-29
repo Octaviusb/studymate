@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Super Admin Functions</title>
+</head>
+<body>
+    <h2>Test de Funciones Super Admin</h2>
+    
+    <h3>Funciones Principales:</h3>
+    <button onclick="testFunction('refreshDashboard')">refreshDashboard</button>
+    <button onclick="testFunction('loadOrganizations')">loadOrganizations</button>
+    <button onclick="testFunction('createOrganization')">createOrganization</button>
+    <button onclick="testFunction('editOrganization')">editOrganization</button>
+    <button onclick="testFunction('deleteOrganization')">deleteOrganization</button>
+    
+    <h3>Funciones CRUD:</h3>
+    <button onclick="testFunction('loadUsers')">loadUsers</button>
+    <button onclick="testFunction('editUser')">editUser</button>
+    <button onclick="testFunction('deleteUser')">deleteUser</button>
+    
+    <h3>Funciones Administrativas:</h3>
+    <button onclick="testFunction('createBulkUsers')">createBulkUsers</button>
+    <button onclick="testFunction('resetUserPasswords')">resetUserPasswords</button>
+    <button onclick="testFunction('exportSystemData')">exportSystemData</button>
+    <button onclick="testFunction('systemMaintenance')">systemMaintenance</button>
+    
+    <div id="result" style="margin-top: 20px; padding: 10px; background: #f0f0f0;"></div>
+    
+    <script>
+        function testFunction(funcName) {
+            const result = document.getElementById('result');
+            
+            if (typeof window[funcName] === 'function') {
+                result.innerHTML = `✅ ${funcName} - Función existe y está definida`;
+                result.style.background = '#d4edda';
+            } else {
+                result.innerHTML = `❌ ${funcName} - Función NO existe`;
+                result.style.background = '#f8d7da';
+            }
+        }
+        
+        // Simular funciones del super admin
+        function refreshDashboard() { console.log('refreshDashboard called'); }
+        function loadOrganizations() { console.log('loadOrganizations called'); }
+        function createOrganization() { console.log('createOrganization called'); }
+        function editOrganization(id) { console.log('editOrganization called with id:', id); }
+        function deleteOrganization(id) { console.log('deleteOrganization called with id:', id); }
+        function loadUsers() { console.log('loadUsers called'); }
+        function editUser(id) { console.log('editUser called with id:', id); }
+        function deleteUser(id) { console.log('deleteUser called with id:', id); }
+        function createBulkUsers() { console.log('createBulkUsers called'); }
+        function resetUserPasswords() { console.log('resetUserPasswords called'); }
+        function exportSystemData() { console.log('exportSystemData called'); }
+        function systemMaintenance() { console.log('systemMaintenance called'); }
+    </script>
+</body>
+</html>

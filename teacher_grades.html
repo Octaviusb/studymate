@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyMate - Calificaciones</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; }
+        .header { background: #2c3e50; color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; }
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+        .filters { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1rem; }
+        .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
+        .form-group input, .form-group select { width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; }
+        .btn { background: #3498db; color: white; padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; }
+        .btn:hover { background: #2980b9; }
+        .btn-success { background: #27ae60; }
+        .section { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1rem; }
+        .table { width: 100%; border-collapse: collapse; }
+        .table th, .table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #ddd; }
+        .table th { background: #f8f9fa; }
+        .grade-input { width: 80px; text-align: center; }
+        .qualitative-grade { padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
+        .grade-superior { background: #d4edda; color: #155724; }
+        .grade-alto { background: #cce5ff; color: #004085; }
+        .grade-basico { background: #fff3cd; color: #856404; }
+        .grade-bajo { background: #f8d7da; color: #721c24; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+        .modal-content { background: white; margin: 15% auto; padding: 2rem; width: 80%; max-width: 500px; border-radius: 8px; }
+        .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .close:hover { color: black; }
+        .alert { padding: 1rem; border-radius: 4px; margin-bottom: 1rem; }
+        .alert-success { background: #d4edda; color: #155724; }
+        .alert-error { background: #f8d7da; color: #721c24; }
+        .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+        @media (max-width: 768px) {
+            .filter-grid { grid-template-columns: 1fr; }
+            .table th, .table td { padding: 0.5rem; }
+            .modal-content { width: 95%; margin: 10% auto; }
+        }
+        @media (max-width: 480px) {
+            .table { font-size: 0.85rem; }
+            .table th, .table td { padding: 0.4rem; font-size: 0.75rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>StudyMate - Gestión de Calificaciones</h1>
+        <div>
+            <span id="user-info">Cargando...</span>
+            <button class="btn" onclick="logout()">Cerrar Sesión</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="alerts" aria-live="polite"></div>
+
+        <!-- Filtros -->
+        <div class="filters">
+            <h3>Filtros de Búsqueda</h3>
+            <div class="filter-grid">
+                <div class="form-group">
+                    <label>Asignatura</label>
+                    <select id="filter-subject">
+                        <option value="">Todas las asignaturas</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Grado</label>
+                    <select id="filter-grade">
+                        <option value="">Todos los grados</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Período</label>
+                    <select id="filter-period">
+                        <option value="">Todos los períodos</option>
+                        <option value="1">Primer Período</option>
+                        <option value="2">Segundo Período</option>
+                        <option value="3">Tercer Período</option>
+                        <option value="4">Cuarto Período</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Estudiante</label>
+                    <input type="text" id="filter-student" placeholder="Buscar por nombre...">
+                </div>
+            </div>
+            <button class="btn" onclick="loadAchievements()">Buscar Logros</button>
+            <button class="btn btn-success" onclick="showGradeModal()">Nueva Calificación</button>
+        </div>
+
+        <!-- Lista de Logros -->
+        <div class="section">
+            <h3>Logros Disponibles para Calificar</h3>
+            <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Asignatura</th>
+                        <th>Grado</th>
+                        <th>Período</th>
+                        <th>Descripción</th>
+                        <th>Tipo</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="achievements-table">
+                    <tr><td colspan="6">Cargando logros...</td></tr>
+                </tbody>
+            </table>
+            </div>
+        </div>
+
+        <!-- Calificaciones Registradas -->
+        <div class="section">
+            <h3>Calificaciones Registradas</h3>
+            <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Estudiante</th>
+                        <th>Asignatura</th>
+                        <th>Logro</th>
+                        <th>Período</th>
+                        <th>Calificación</th>
+                        <th>Cualitativa</th>
+                        <th>Fecha</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="grades-table">
+                    <tr><td colspan="8">Cargando calificaciones...</td></tr>
+                </tbody>
+            </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Nueva Calificación -->
+    <div id="grade-modal" class="modal">
+        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="grade-modal-title">
+            <span class="close" onclick="closeGradeModal()" tabindex="0" aria-label="Cerrar">&times;</span>
+            <h3 id="grade-modal-title">Registrar Calificación</h3>
+            <form id="grade-form">
+                <div class="form-group">
+                    <label>Logro</label>
+                    <select id="grade-achievement" required>
+                        <option value="">Seleccionar logro</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Estudiante</label>
+                    <select id="grade-student" required>
+                        <option value="">Seleccionar estudiante</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Calificación (0.0 - 10.0)</label>
+                    <input type="number" id="grade-score" min="0" max="10" step="0.1" required>
+                </div>
+                <div class="form-group">
+                    <label>Observaciones</label>
+                    <textarea id="grade-observations" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-success">Registrar Calificación</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Editar Calificación -->
+    <div id="edit-grade-modal" class="modal">
+        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="edit-grade-modal-title">
+            <span class="close" onclick="closeEditGradeModal()" tabindex="0" aria-label="Cerrar">&times;</span>
+            <h3 id="edit-grade-modal-title">Editar Calificación</h3>
+            <div id="edit-grade-info" style="margin-bottom: 1rem; color:#555;"></div>
+            <form id="edit-grade-form">
+                <div class="form-group">
+                    <label>Nueva Calificación (0.0 - 10.0)</label>
+                    <input type="number" id="edit-grade-score" min="0" max="10" step="0.1" required>
+                </div>
+                <div class="form-group">
+                    <label>Observaciones</label>
+                    <textarea id="edit-grade-observations" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-success">Guardar Cambios</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Crear Recuperación -->
+    <div id="recovery-modal" class="modal">
+        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="recovery-modal-title">
+            <span class="close" onclick="closeRecoveryModal()" tabindex="0" aria-label="Cerrar">&times;</span>
+            <h3 id="recovery-modal-title">Crear Actividad de Recuperación</h3>
+            <div id="recovery-info" style="margin-bottom: 1rem; color:#555;"></div>
+            <form id="recovery-form">
+                <div class="form-group">
+                    <label>Título</label>
+                    <input type="text" id="recovery-title" placeholder="Recuperación de logro" required>
+                </div>
+                <div class="form-group">
+                    <label>Instrucciones</label>
+                    <textarea id="recovery-instructions" rows="3" placeholder="Describe la actividad de recuperación..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Fecha límite</label>
+                    <input type="date" id="recovery-deadline" required>
+                </div>
+                <button type="submit" class="btn btn-success">Crear Recuperación</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let subjects = [];
+        let grades = [];
+        let achievements = [];
+        let students = [];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            loadSubjects();
+            loadGrades();
+            loadStudents();
+            loadAchievements();
+            loadStudentGrades();
+            
+            document.getElementById('grade-form').addEventListener('submit', createGrade);
+        });
+
+        function checkAuth() {
+            const user = JSON.parse(localStorage.getItem('studymate_user') || '{}');
+            if (!user.id || !['teacher', 'admin'].includes(user.role)) {
+                alert('Acceso denegado. Solo docentes pueden acceder.');
+                window.location.href = '/';
+                return;
+            }
+            currentUser = user;
+            document.getElementById('user-info').textContent = `${user.name} (${user.role})`;
+        }
+
+        async function loadSubjects() {
+            try {
+                const response = await fetch(`/api/subjects?user_id=${currentUser.id}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    subjects = data.subjects;
+                    populateSubjectFilter();
+                }
+            } catch (error) {
+                console.error('Error loading subjects:', error);
+            }
+        }
+
+        async function loadGrades() {
+            try {
+                const response = await fetch(`/api/grades?user_id=${currentUser.id}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    grades = data.grades;
+                    populateGradeFilter();
+                }
+            } catch (error) {
+                console.error('Error loading grades:', error);
+            }
+        }
+
+        async function loadStudents() {
+            try {
+                const response = await fetch(`/api/organizations/stats?user_id=${currentUser.id}`);
+                // Aquí necesitarías una API específica para estudiantes
+                // Por ahora usamos datos mock
+                students = [
+                    {id: 1, full_name: 'Ana García', grade_level: '6°'},
+                    {id: 2, full_name: 'Carlos López', grade_level: '7°'},
+                    {id: 3, full_name: 'María Rodríguez', grade_level: '8°'}
+                ];
+                populateStudentSelect();
+            } catch (error) {
+                console.error('Error loading students:', error);
+            }
+        }
+
+        async function loadAchievements() {
+            const subjectId = document.getElementById('filter-subject').value;
+            const gradeId = document.getElementById('filter-grade').value;
+            const period = document.getElementById('filter-period').value;
+            
+            let url = `/api/achievements?user_id=${currentUser.id}`;
+            const params = [];
+            if (subjectId) params.push(`subject_id=${subjectId}`);
+            if (gradeId) params.push(`grade_id=${gradeId}`);
+            if (period) params.push(`period=${period}`);
+            if (params.length > 0) url += '&' + params.join('&');
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    achievements = data.achievements;
+                    displayAchievements();
+                    populateAchievementSelect();
+                }
+            } catch (error) {
+                console.error('Error loading achievements:', error);
+            }
+        }
+
+        async function loadStudentGrades() {
+            const studentId = document.getElementById('filter-student').value;
+            const subjectId = document.getElementById('filter-subject').value;
+            const period = document.getElementById('filter-period').value;
+            
+            let url = `/api/student-grades?user_id=${currentUser.id}`;
+            const params = [];
+            if (studentId) params.push(`student_id=${studentId}`);
+            if (subjectId) params.push(`subject_id=${subjectId}`);
+            if (period) params.push(`period=${period}`);
+            if (params.length > 0) url += '&' + params.join('&');
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    displayStudentGrades(data.grades);
+                }
+            } catch (error) {
+                console.error('Error loading student grades:', error);
+            }
+        }
+
+        function populateSubjectFilter() {
+            const select = document.getElementById('filter-subject');
+            select.innerHTML = '<option value="">Todas las asignaturas</option>' +
+                subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+        }
+
+        function populateGradeFilter() {
+            const select = document.getElementById('filter-grade');
+            select.innerHTML = '<option value="">Todos los grados</option>' +
+                grades.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+        }
+
+        function populateAchievementSelect() {
+            const select = document.getElementById('grade-achievement');
+            select.innerHTML = '<option value="">Seleccionar logro</option>' +
+                achievements.map(a => `<option value="${a.id}">${a.subject_name} - ${a.grade_name} - P${a.period}: ${a.description}</option>`).join('');
+        }
+
+        function populateStudentSelect() {
+            const select = document.getElementById('grade-student');
+            select.innerHTML = '<option value="">Seleccionar estudiante</option>' +
+                students.map(s => `<option value="${s.id}">${s.full_name} (${s.grade_level})</option>`).join('');
+        }
+
+        function displayAchievements() {
+            const tbody = document.getElementById('achievements-table');
+            if (achievements.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6">No se encontraron logros</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = achievements.map(achievement => `
+                <tr>
+                    <td>${achievement.subject_name}</td>
+                    <td>${achievement.grade_name}</td>
+                    <td>Período ${achievement.period}</td>
+                    <td>${achievement.description}</td>
+                    <td>${achievement.competency_type}</td>
+                    <td>
+                        <button class="btn" onclick="gradeAchievement(${achievement.id})">Calificar</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function displayStudentGrades(grades) {
+            const tbody = document.getElementById('grades-table');
+            if (grades.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8">No se encontraron calificaciones</td></tr>';
+                return;
+            }
+            // Guardar en memoria para acciones (editar/recuperación)
+            window._gradeIndex = {};
+            grades.forEach(g => { window._gradeIndex[g.id] = g; });
+
+            tbody.innerHTML = grades.map(grade => `
+                <tr>
+                    <td>${grade.student_name}</td>
+                    <td>${grade.subject_name}</td>
+                    <td>${grade.achievement_description}</td>
+                    <td>Período ${grade.period}</td>
+                    <td>${grade.score}</td>
+                    <td><span class="qualitative-grade grade-${grade.qualitative_grade.toLowerCase()}">${grade.qualitative_grade}</span></td>
+                    <td>${new Date(grade.graded_at).toLocaleDateString()}</td>
+                    <td>
+                        <button class="btn" onclick="editGrade(${grade.id})">Editar</button>
+                        <button class="btn btn-warning" onclick="openRecovery(${grade.id})">Recuperación</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function showGradeModal() {
+            const modal = document.getElementById('grade-modal');
+            modal.style.display = 'block';
+            setTimeout(()=>{ document.getElementById('grade-achievement')?.focus(); },0);
+            enableFocusTrap(modal);
+        }
+
+        function closeGradeModal() {
+            const modal = document.getElementById('grade-modal');
+            modal.style.display = 'none';
+            disableFocusTrap(modal);
+            document.getElementById('grade-form').reset();
+        }
+
+        function gradeAchievement(achievementId) {
+            document.getElementById('grade-achievement').value = achievementId;
+            showGradeModal();
+        }
+
+        async function createGrade(e) {
+            e.preventDefault();
+            
+            const gradeData = {
+                student_id: parseInt(document.getElementById('grade-student').value),
+                achievement_id: parseInt(document.getElementById('grade-achievement').value),
+                score: parseFloat(document.getElementById('grade-score').value),
+                observations: document.getElementById('grade-observations').value,
+                user_id: currentUser.id
+            };
+
+            try {
+                const response = await fetch('/api/student-grades', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(gradeData)
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showAlert('Calificación registrada exitosamente', 'success');
+                    closeGradeModal();
+                    loadStudentGrades();
+                } else {
+                    showAlert('Error: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showAlert('Error de conexión', 'error');
+            }
+        }
+
+        function showAlert(message, type) {
+            const alerts = document.getElementById('alerts');
+            alerts.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => alerts.innerHTML = '', 5000);
+        }
+
+        function logout() {
+            localStorage.removeItem('studymate_user');
+            localStorage.removeItem('studymate_token');
+            window.location.href = '/';
+        }
+
+        // ==== Edición de calificación ====
+        let _editingGradeId = null;
+        function editGrade(gradeId) {
+            const g = window._gradeIndex?.[gradeId];
+            if (!g) { showAlert('No se pudo cargar la calificación', 'error'); return; }
+            _editingGradeId = gradeId;
+            document.getElementById('edit-grade-info').textContent = `${g.student_name} • ${g.subject_name} • P${g.period}`;
+            document.getElementById('edit-grade-score').value = g.score;
+            document.getElementById('edit-grade-observations').value = g.observations || '';
+            const modal = document.getElementById('edit-grade-modal');
+            modal.style.display = 'block';
+            setTimeout(()=>{ document.getElementById('edit-grade-score')?.focus(); },0);
+            enableFocusTrap(modal);
+        }
+        function closeEditGradeModal() {
+            const modal = document.getElementById('edit-grade-modal');
+            modal.style.display = 'none';
+            disableFocusTrap(modal);
+            _editingGradeId = null;
+        }
+        document.getElementById('edit-grade-form').addEventListener('submit', async function(e){
+            e.preventDefault();
+            if (!_editingGradeId) return;
+            const newScore = parseFloat(document.getElementById('edit-grade-score').value);
+            if (isNaN(newScore) || newScore < 0 || newScore > 10) { showAlert('Ingrese una calificación válida (0-10)', 'warning'); return; }
+            const observations = document.getElementById('edit-grade-observations').value || '';
+            try {
+                const response = await fetch(`/api/student-grades/${_editingGradeId}?user_id=${currentUser.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ score: newScore, observations })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    showAlert('Calificación actualizada exitosamente', 'success');
+                    closeEditGradeModal();
+                    loadStudentGrades();
+                } else {
+                    showAlert('Error: ' + (data.message || 'No se pudo actualizar'), 'error');
+                }
+            } catch(err){
+                showAlert('Error de conexión', 'error');
+            }
+        });
+
+        // ==== Recuperación de nota ====
+        let _recoveryGradeId = null;
+        function openRecovery(gradeId){
+            const g = window._gradeIndex?.[gradeId];
+            if (!g) { showAlert('No se pudo cargar la calificación', 'error'); return; }
+            _recoveryGradeId = gradeId;
+            document.getElementById('recovery-info').textContent = `${g.student_name} • ${g.subject_name} • P${g.period}`;
+            document.getElementById('recovery-title').value = `Recuperación: ${g.achievement_description}`;
+            const today = new Date();
+            const plus7 = new Date(today.getTime() + 7*24*60*60*1000);
+            document.getElementById('recovery-deadline').value = plus7.toISOString().slice(0,10);
+            document.getElementById('recovery-instructions').value = '';
+            const modal = document.getElementById('recovery-modal');
+            modal.style.display = 'block';
+            setTimeout(()=>{ document.getElementById('recovery-title')?.focus(); },0);
+            enableFocusTrap(modal);
+        }
+        function closeRecoveryModal(){
+            const modal = document.getElementById('recovery-modal');
+            modal.style.display = 'none';
+            disableFocusTrap(modal);
+            _recoveryGradeId = null;
+        }
+        document.getElementById('recovery-form').addEventListener('submit', async function(e){
+            e.preventDefault();
+            if (!_recoveryGradeId) return;
+            const g = window._gradeIndex[_recoveryGradeId];
+            const payload = {
+                user_id: currentUser.id,
+                grade_id: _recoveryGradeId,
+                student_id: g.student_id,
+                achievement_id: g.achievement_id,
+                title: document.getElementById('recovery-title').value,
+                instructions: document.getElementById('recovery-instructions').value,
+                deadline: document.getElementById('recovery-deadline').value
+            };
+            try {
+                const resp = await fetch('/recovery_api.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await resp.json();
+                if (resp.ok) {
+                    showAlert('Actividad de recuperación creada', 'success');
+                    closeRecoveryModal();
+                } else {
+                    showAlert('Error: ' + (data.message || 'No se pudo crear la recuperación'), 'error');
+                }
+            } catch(err){
+                showAlert('Error de conexión', 'error');
+            }
+        });
+    </script>
+</body>
+</html>

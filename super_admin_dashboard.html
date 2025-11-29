@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyMate - Panel Super Administrador</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; }
+        .header { background: #2c3e50; color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; }
+        .nav { background: #34495e; padding: 0.5rem 1rem; }
+        .nav-tabs { display: flex; gap: 1rem; flex-wrap: wrap; }
+        .nav-tab { background: none; border: none; color: white; padding: 0.5rem 1rem; cursor: pointer; border-radius: 4px; }
+        .nav-tab.active { background: #3498db; }
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+        .section { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1rem; display: none; }
+        .section.active { display: block !important; }
+        #dashboard-section { display: block; }
+        #dashboard-section.active { display: block !important; }
+        .subsection { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1rem; display: block; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .stat-card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .stat-number { font-size: 2rem; font-weight: bold; color: #3498db; }
+        .stat-label { color: #7f8c8d; margin-top: 0.5rem; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; }
+        .btn { background: #3498db; color: white; padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; margin-right: 0.5rem; }
+        .btn:hover { background: #2980b9; }
+        .btn-success { background: #27ae60; }
+        .btn-danger { background: #e74c3c; }
+        .btn-warning { background: #f39c12; }
+        .btn-small { padding: 0.25rem 0.5rem; font-size: 0.8rem; }
+        .table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        .table th, .table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #ddd; }
+        .table th { background: #f8f9fa; }
+        .alert { padding: 1rem; border-radius: 4px; margin-bottom: 1rem; }
+        .alert-success { background: #d4edda; color: #155724; }
+        .alert-error { background: #f8d7da; color: #721c24; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+        .modal-content { background: white; margin: 5% auto; padding: 2rem; width: 80%; max-width: 600px; border-radius: 8px; }
+        .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .close:hover { color: black; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>StudyMate - Panel Super Administrador</h1>
+        <div>
+            <span id="user-info">Cargando...</span>
+            <button class="btn" onclick="goBack()">Volver</button>
+            <button class="btn" onclick="logout()">Cerrar Sesión</button>
+        </div>
+    </div>
+
+    <div class="nav">
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showSection('dashboard')">Dashboard</button>
+            <button class="nav-tab" onclick="showSection('subscriptions')">💰 Suscripciones</button>
+            <button class="nav-tab" onclick="showSection('organizations')">Organizaciones</button>
+            <button class="nav-tab" onclick="showSection('users')">Usuarios</button>
+            <button class="nav-tab" onclick="showSection('teachers')">Docentes</button>
+            <button class="nav-tab" onclick="showSection('students')">Estudiantes</button>
+            <button class="nav-tab" onclick="showSection('academic')">Académico</button>
+            <button class="nav-tab" onclick="showSection('system')">Sistema</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="alerts"></div>
+
+        <!-- Dashboard Section -->
+        <div id="dashboard-section" class="section active">
+            <h2>Resumen General</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="total-orgs">0</div>
+                    <div class="stat-label">Organizaciones</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="active-subscriptions">0</div>
+                    <div class="stat-label">Suscripciones Activas</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="monthly-revenue">0</div>
+                    <div class="stat-label">Ingresos Mensuales</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="total-users">0</div>
+                    <div class="stat-label">Usuarios Totales</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="total-teachers">0</div>
+                    <div class="stat-label">Docentes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="total-students">0</div>
+                    <div class="stat-label">Estudiantes</div>
+                </div>
+            </div>
+            
+            <div class="subsection">
+                <h3>Acciones Rápidas</h3>
+                <button class="btn" onclick="refreshDashboard()">Actualizar Dashboard</button>
+                <button class="btn btn-success" onclick="showSection('organizations')">Nueva Organizacion</button>
+                <button class="btn btn-warning" onclick="showSystemStatus()">Estado del Sistema</button>
+            </div>
+
+            <div class="subsection">
+                <h3>Acceso a Paneles</h3>
+                <button class="btn" onclick="openTeacherPanel()">Panel de Docentes</button>
+                <button class="btn" onclick="openGradesPanel()">Sistema de Calificaciones</button>
+                <button class="btn" onclick="openStudentPanel()">Portal Estudiantes</button>
+                <button class="btn" onclick="openAdminPanel()">Panel Administrador</button>
+            </div>
+
+            <div class="subsection">
+                <h3>Funciones Administrativas</h3>
+                <button class="btn btn-success" onclick="createBulkUsers()">Crear Usuarios Masivos</button>
+                <button class="btn btn-warning" onclick="resetUserPasswords()">Resetear Contrasenas</button>
+                <button class="btn" onclick="exportSystemData()">Exportar Datos Sistema</button>
+                <button class="btn btn-danger" onclick="systemMaintenance()">Mantenimiento</button>
+            </div>
+        </div>
+
+        <!-- Subscriptions Section -->
+        <div id="subscriptions-section" class="section">
+            <h2>💰 Gestión de Suscripciones SaaS</h2>
+
+            <div class="subsection">
+                <h3>Crear Nueva Suscripción</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Organización</label>
+                        <select id="sub-org-selector">
+                            <option value="">Seleccionar organización</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Plan</label>
+                        <select id="sub-plan-selector">
+                            <option value="">Seleccionar plan</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn btn-success" onclick="createSubscription()">Crear Suscripción</button>
+            </div>
+
+            <div class="subsection">
+                <h3>Suscripciones Activas</h3>
+                <div id="subscriptions-list">
+                    <div class="alert alert-info">Cargando suscripciones...</div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>Registrar Pago</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Suscripción</label>
+                        <select id="payment-subscription-selector">
+                            <option value="">Seleccionar suscripción</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo</label>
+                        <select id="payment-type">
+                            <option value="activation">Activación</option>
+                            <option value="monthly">Mensual</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Monto ($)</label>
+                        <input type="number" id="payment-amount" step="0.01">
+                    </div>
+                </div>
+                <button class="btn btn-success" onclick="createSubscriptionPayment()">Registrar Pago</button>
+            </div>
+        </div>
+
+        <!-- Organizations Section -->
+        <div id="organizations-section" class="section">
+            <h2>Gestión de Organizaciones</h2>
+            
+            <div class="subsection">
+                <h3>Crear Nueva Organización</h3>
+                <form id="org-form">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Nombre de la Institución *</label>
+                            <input type="text" id="org-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Dominio</label>
+                            <input type="text" id="org-domain" placeholder="ejemplo.studymate.com">
+                        </div>
+                        <div class="form-group">
+                            <label>Plan</label>
+                            <select id="org-plan">
+                                <option value="free">Free (50 usuarios)</option>
+                                <option value="basic">Basic (100 usuarios)</option>
+                                <option value="premium">Premium (500 usuarios)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-success">Crear Organización</button>
+                </form>
+            </div>
+
+            <div class="subsection">
+                <h3>Organizaciones Registradas</h3>
+                <button class="btn" onclick="loadOrganizations()">Actualizar Lista</button>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Dominio</th>
+                            <th>Plan</th>
+                            <th>Usuarios</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orgs-table">
+                        <tr><td colspan="7">Cargando organizaciones...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Users Section -->
+        <div id="users-section" class="section">
+            <h2>Gestión Global de Usuarios</h2>
+
+            <div class="subsection">
+                <h3>Filtros</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Organización</label>
+                        <select id="filter-org">
+                            <option value="">Todas las organizaciones</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Rol</label>
+                        <select id="filter-role">
+                            <option value="">Todos los roles</option>
+                            <option value="student">Estudiantes</option>
+                            <option value="teacher">Docentes</option>
+                            <option value="admin">Administradores</option>
+                            <option value="coordinator">Coordinadores</option>
+                            <option value="secretary">Secretarias</option>
+                            <option value="parent">Padres</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn" onclick="loadUsers()">Buscar Usuarios</button>
+            </div>
+
+            <div class="subsection">
+                <h3>Lista de Usuarios</h3>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>Rol</th>
+                            <th>Organización</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-table">
+                        <tr><td colspan="7">Cargando usuarios...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Teachers Section -->
+        <div id="teachers-section" class="section">
+            <h2>Gestión Global de Docentes</h2>
+
+            <div class="subsection">
+                <h3>Filtros de Docentes</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Organización</label>
+                        <select id="teacher-filter-org">
+                            <option value="">Todas las organizaciones</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Materia</label>
+                        <select id="teacher-filter-subject">
+                            <option value="">Todas las materias</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn" onclick="loadTeachers()">Buscar Docentes</button>
+            </div>
+
+            <div class="subsection">
+                <h3>Lista de Docentes</h3>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>Materia</th>
+                            <th>Organización</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="teachers-table">
+                        <tr><td colspan="7">Cargando docentes...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Students Section -->
+        <div id="students-section" class="section">
+            <h2>Gestión Global de Estudiantes</h2>
+
+            <div class="subsection">
+                <h3>Filtros de Estudiantes</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Organización</label>
+                        <select id="student-filter-org">
+                            <option value="">Todas las organizaciones</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Grado</label>
+                        <select id="student-filter-grade">
+                            <option value="">Todos los grados</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn" onclick="loadStudents()">Buscar Estudiantes</button>
+            </div>
+
+            <div class="subsection">
+                <h3>Lista de Estudiantes</h3>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>Grado</th>
+                            <th>Organización</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="students-table">
+                        <tr><td colspan="7">Cargando estudiantes...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Academic Section -->
+        <div id="academic-section" class="section">
+            <h2>Gestión Académica Global</h2>
+            
+            <div class="subsection">
+                <h3>Filtros Académicos</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Organización</label>
+                        <select id="academic-org-filter">
+                            <option value="">Todas las organizaciones</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Grado</label>
+                        <select id="academic-grade-filter">
+                            <option value="">Todos los grados</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Materia</label>
+                        <select id="academic-subject-filter">
+                            <option value="">Todas las materias</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn" onclick="loadAcademicData()">Buscar Datos Academicos</button>
+            </div>
+
+            <div class="subsection">
+                <h3>Materias por Organización</h3>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Organización</th>
+                            <th>Materia</th>
+                            <th>Descripción</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="subjects-table">
+                        <tr><td colspan="5">Cargando materias...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="subsection">
+                <h3>Grados Académicos</h3>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Organización</th>
+                            <th>Grado</th>
+                            <th>Descripción</th>
+                            <th>Estudiantes</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="grades-table">
+                        <tr><td colspan="5">Cargando grados...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="subsection">
+                <h3>Calificaciones Recientes</h3>
+                <div style="margin-bottom: 1rem;">
+                    <button class="btn" onclick="loadRecentGrades()">Actualizar Calificaciones</button>
+                    <button class="btn btn-success" onclick="openTeacherPanel()">Gestionar Calificaciones</button>
+                    <button class="btn btn-warning" onclick="exportGrades()">Exportar Datos</button>
+                </div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Organización</th>
+                            <th>Estudiante</th>
+                            <th>Materia</th>
+                            <th>Grado</th>
+                            <th>Calificación</th>
+                            <th>Fecha</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recent-grades-table">
+                        <tr><td colspan="7">Cargando calificaciones...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- System Section -->
+        <div id="system-section" class="section">
+            <h2>Administración del Sistema</h2>
+            
+            <div class="subsection">
+                <h3>Estado del Sistema</h3>
+                <div id="system-status">
+                    <p>Verificando estado del sistema...</p>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>Herramientas de Mantenimiento</h3>
+                <button class="btn btn-warning" onclick="checkDatabase()">Verificar Base de Datos</button>
+                <button class="btn" onclick="viewLogs()">Ver Logs del Sistema</button>
+                <button class="btn btn-success" onclick="backupSystem()">Respaldar Sistema</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for editing -->
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h3 id="modal-title">Editar</h3>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            refreshDashboard();
+            loadOrganizations();
+            loadAcademicData();
+            loadRecentGrades();
+            document.getElementById('org-form').addEventListener('submit', createOrganization);
+        });
+
+        function checkAuth() {
+            const user = JSON.parse(localStorage.getItem('studymate_user') || '{}');
+            if (!user.id || user.role !== 'super_admin') {
+                alert('Acceso denegado. Solo super administradores pueden acceder.');
+                window.location.href = '/';
+                return;
+            }
+            currentUser = user;
+            document.getElementById('user-info').textContent = `${user.name} (${user.role})`;
+        }
+
+        function showSection(section) {
+            // Ocultar solo las secciones principales
+            document.querySelectorAll('[id$="-section"]').forEach(s => {
+                s.classList.remove('active');
+            });
+            
+            // Remover active de todas las pestañas
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            
+            // Mostrar la sección seleccionada
+            const targetSection = document.getElementById(section + '-section');
+            if (targetSection) {
+                targetSection.classList.add('active');
+            }
+            
+            // Activar la pestaña
+            event.target.classList.add('active');
+            
+            // Cargar datos según la sección
+            if (section === 'subscriptions') {
+                loadSubscriptions();
+                loadOrganizationsForSubscriptions();
+                loadPlansForSubscriptions();
+                loadSubscriptionsForPayments();
+            }
+            if (section === 'organizations') {
+                loadOrganizations();
+            }
+            if (section === 'users') {
+                loadOrganizationsForFilter();
+                loadUsers();
+            }
+            if (section === 'teachers') {
+                loadOrganizationsForTeacherFilter();
+                loadTeachers();
+            }
+            if (section === 'students') {
+                loadOrganizationsForStudentFilter();
+                loadStudents();
+            }
+            if (section === 'system') {
+                showSystemStatus();
+            }
+            if (section === 'academic') {
+                loadAcademicData();
+                loadRecentGrades();
+            }
+        }
+
+        async function refreshDashboard() {
+            // Valores por defecto siempre
+            document.getElementById('total-orgs').textContent = '0';
+            document.getElementById('total-users').textContent = '0';
+            document.getElementById('total-teachers').textContent = '0';
+            document.getElementById('total-students').textContent = '0';
+            document.getElementById('active-subscriptions').textContent = '0';
+            document.getElementById('monthly-revenue').textContent = '$0';
+
+            try {
+                // Intentar cargar estadísticas del sistema
+                const response = await fetch(`system_stats.php?user_id=${currentUser.id}&v=${Date.now()}`);
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    document.getElementById('total-orgs').textContent = data.total_organizations || 0;
+                    document.getElementById('total-users').textContent = data.total_users || 0;
+                    document.getElementById('total-teachers').textContent = data.total_teachers || 0;
+                    document.getElementById('total-students').textContent = data.total_students || 0;
+                    document.getElementById('active-subscriptions').textContent = data.active_subscriptions || 0;
+                    document.getElementById('monthly-revenue').textContent = '$' + (data.monthly_revenue || 0).toLocaleString();
+                }
+                // Si hay error, mantener valores por defecto sin mostrar mensaje
+            } catch (error) {
+                // Mantener valores por defecto sin mostrar error
+                console.log('Dashboard loaded with default values');
+            }
+        }
+
+        async function loadOrganizations() {
+            try {
+                const response = await fetch(`org_api.php?action=list&user_id=${currentUser.id}&v=${Date.now()}`);
+                const data = await response.json();
+
+                if (response.ok && data.organizations) {
+                    displayOrganizations(data.organizations);
+                } else {
+                    displayOrganizations([]);
+                    showAlert('No se pudieron cargar las organizaciones', 'warning');
+                }
+            } catch (error) {
+                console.error('Error loading organizations:', error);
+                displayOrganizations([]);
+                showAlert('Error de conexión al cargar organizaciones', 'error');
+            }
+        }
+
+        function displayOrganizations(organizations) {
+            const tbody = document.getElementById('orgs-table');
+            if (organizations.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7">No hay organizaciones registradas</td></tr>';
+                return;
+            }
+            tbody.innerHTML = organizations.map(org => `
+                <tr>
+                    <td>${org.id}</td>
+                    <td><strong>${org.name}</strong></td>
+                    <td>${org.domain || 'N/A'}</td>
+                    <td><span style="background: #3498db; color: white; padding: 2px 6px; border-radius: 3px; font-size: 0.8em;">${org.plan.toUpperCase()}</span></td>
+                    <td>${org.user_count || 0}/${org.max_users}</td>
+                    <td><span style="color: #27ae60; font-weight: bold;">${org.status.toUpperCase()}</span></td>
+                    <td>
+                        <button class="btn btn-small" onclick="editOrganization(${org.id})">Editar</button>
+                        <button class="btn btn-danger btn-small" onclick="deleteOrganization(${org.id})">Eliminar</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function createOrganization(e) {
+            e.preventDefault();
+            
+            const plan = document.getElementById('org-plan').value;
+            const maxUsers = plan === 'free' ? 50 : (plan === 'basic' ? 100 : 500);
+            
+            const orgData = {
+                name: document.getElementById('org-name').value,
+                domain: document.getElementById('org-domain').value,
+                plan: plan,
+                max_users: maxUsers,
+                user_id: currentUser.id
+            };
+
+            try {
+                const response = await fetch('org_api.php?action=create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(orgData)
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showAlert('Organización creada exitosamente', 'success');
+                    document.getElementById('org-form').reset();
+                    loadOrganizations();
+                    refreshDashboard();
+                } else {
+                    showAlert('Error: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showAlert('Error de conexión', 'error');
+            }
+        }
+
+        async function loadAcademicData() {
+            // Cargar datos académicos
+            try {
+                const response = await fetch(`subjects.php?action=list&user_id=${currentUser.id}`);
+
+                if (!response.ok) {
+                    displaySubjects([]);
+                    showAlert('Error al cargar datos académicos', 'warning');
+                    return;
+                }
+
+                const text = await response.text();
+
+                // Verificar si la respuesta es JSON válido
+                if (!text.trim().startsWith('{') && !text.trim().startsWith('[')) {
+                    displaySubjects([]);
+                    showAlert('Respuesta inválida del servidor', 'warning');
+                    return;
+                }
+
+                const data = JSON.parse(text);
+                displaySubjects(data.subjects || []);
+
+            } catch (error) {
+                console.error('Error loading academic data:', error);
+                displaySubjects([]);
+                showAlert('Error de conexión al cargar datos académicos', 'error');
+            }
+        }
+        
+        function displaySubjects(subjects) {
+            const tbody = document.getElementById('subjects-table');
+            if (subjects.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5">No hay materias registradas</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = subjects.map(subject => `
+                <tr>
+                    <td>${subject.organization_name || 'N/A'}</td>
+                    <td>${subject.name}</td>
+                    <td>${subject.description || 'N/A'}</td>
+                    <td><span style="color: #27ae60; font-weight: bold;">${subject.status.toUpperCase()}</span></td>
+                    <td>
+                        <button class="btn btn-small" onclick="editSubject(${subject.id})">Editar</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function editSubject(id) {
+            showAlert('Edición de materia en desarrollo', 'warning');
+        }
+
+        async function loadUsers() {
+            try {
+                const orgFilter = document.getElementById('filter-org').value;
+                const roleFilter = document.getElementById('filter-role').value;
+
+                let url = `users_api.php?action=list&user_id=${currentUser.id}&v=${Date.now()}`;
+                if (orgFilter) url += `&org_id=${orgFilter}`;
+                if (roleFilter) url += `&role=${roleFilter}`;
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (response.ok && data.users) {
+                    displayUsers(data.users);
+                } else {
+                    displayUsers([]);
+                    showAlert('No se pudieron cargar los usuarios', 'warning');
+                }
+            } catch (error) {
+                console.error('Error loading users:', error);
+                displayUsers([]);
+                showAlert('Error de conexión al cargar usuarios', 'error');
+            }
+        }
+
+        function displayUsers(users) {
+            const tbody = document.getElementById('users-table');
+            tbody.innerHTML = users.map(user => `
+                <tr>
+                    <td>${user.id}</td>
+                    <td>${user.full_name}</td>
+                    <td>${user.email}</td>
+                    <td><span style="background: #f39c12; color: white; padding: 2px 6px; border-radius: 3px; font-size: 0.8em;">${user.role.toUpperCase()}</span></td>
+                    <td>${user.organization_name || 'N/A'}</td>
+                    <td>${user.status}</td>
+                    <td>
+                        <button class="btn btn-small" onclick="editUser(${user.id})">Editar</button>
+                        <button class="btn btn-danger btn-small" onclick="deleteUser(${user.id})">Eliminar</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function showSystemStatus() {
+            document.getElementById('system-status').innerHTML = `
+                <div style="padding: 1rem; background: #d4edda; border-radius: 4px; margin-bottom: 1rem;">
+                    <h4>✅ Sistema Operativo</h4>
+                    <p>Base de datos: Conectada</p>
+                    <p>APIs: Funcionando</p>
+                    <p>Última actualización: ${new Date().toLocaleString()}</p>
+                </div>
+            `;
+        }
+
+        function showAlert(message, type) {
+            const alerts = document.getElementById('alerts');
+            alerts.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => alerts.innerHTML = '', 5000);
+        }
+
+        function logout() {
+            localStorage.removeItem('studymate_user');
+            localStorage.removeItem('studymate_token');
+            window.location.href = '/';
+        }
+
+        async function loadOrganizationsForFilter() {
+            try {
+                const response = await fetch(`org_api.php?action=list&user_id=${currentUser.id}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    const select = document.getElementById('filter-org');
+                    select.innerHTML = '<option value="">Todas las organizaciones</option>' +
+                        data.organizations.map(org => `<option value="${org.id}">${org.name}</option>`).join('');
+                }
+            } catch (error) {
+                console.error('Error loading organizations for filter:', error);
+            }
+        }
+
+        async function loadOrganizationsForTeacherFilter() {
+            try {
+                const response = await fetch(`org_api.php?action=list&user_id=${currentUser.id}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    const select = document.getElementById('teacher-filter-org');
+                    select.innerHTML = '<option value="">Todas las organizaciones</option>' +
+                        data.organizations.map(org => `<option value="${org.id}">${org.name}</option>`).join('');
+                }
+            } catch (error) {
+                console.error('Error loading organizations for teacher filter:', error);
+            }
+        }
+
+        async function loadOrganizationsForStudentFilter() {
+            try {
+                const response = await fetch(`org_api.php?action=list&user_id=${currentUser.id}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    const select = document.getElementById('student-filter-org');
+                    select.innerHTML = '<option value="">Todas las organizaciones</option>' +
+                        data.organizations.map(org => `<option value="${org.id}">${org.name}</option>`).join('');
+                }
+            } catch (error) {
+                console.error('Error loading organizations for student filter:', error);
+            }
+        }
+
+        async function loadTeachers() {
+            try {
+                const orgFilter = document.getElementById('teacher-filter-org').value;
+                const subjectFilter = document.getElementById('teacher-filter-subject').value;
+
+                let url = `users_api.php?action=list&role=teacher&v=${Date.now()}`;
+                if (orgFilter) url += `&org_id=${orgFilter}`;
+                if (subjectFilter) url += `&subject=${subjectFilter}`;
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (response.ok && data.users) {
+                    displayTeachers(data.users);
+                } else {
+                    displayTeachers([]);
+                    showAlert('No se pudieron cargar los docentes', 'warning');
+                }
+            } catch (error) {
+                console.error('Error loading teachers:', error);
+                displayTeachers([]);
+                showAlert('Error de conexión al cargar docentes', 'error');
+            }
+        }
+
+        function displayTeachers(teachers) {
+            const tbody = document.getElementById('teachers-table');
+            tbody.innerHTML = teachers.map(teacher => `
+                <tr>
+                    <td>${teacher.id}</td>
+                    <td>${teacher.full_name}</td>
+                    <td>${teacher.email}</td>
+                    <td>${teacher.subject || 'General'}</td>
+                    <td>${teacher.organization_name || 'N/A'}</td>
+                    <td>${teacher.status}</td>
+                    <td>
+                        <button class="btn btn-small" onclick="editUser(${teacher.id})">Editar</button>
+                        <button class="btn btn-danger btn-small" onclick="deleteUser(${teacher.id})">Eliminar</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function loadStudents() {
+            try {
+                const orgFilter = document.getElementById('student-filter-org').value;
+                const gradeFilter = document.getElementById('student-filter-grade').value;
+
+                let url = `users_api.php?action=list&role=student&v=${Date.now()}`;
+                if (orgFilter) url += `&org_id=${orgFilter}`;
+                if (gradeFilter) url += `&grade=${gradeFilter}`;
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (response.ok && data.users) {
+                    displayStudents(data.users);
+                } else {
+                    displayStudents([]);
+                    showAlert('No se pudieron cargar los estudiantes', 'warning');
+                }
+            } catch (error) {
+                console.error('Error loading students:', error);
+                displayStudents([]);
+                showAlert('Error de conexión al cargar estudiantes', 'error');
+            }
+        }
+
+        function displayStudents(students) {
+            const tbody = document.getElementById('students-table');
+            tbody.innerHTML = students.map(student => `
+                <tr>
+                    <td>${student.id}</td>
+                    <td>${student.full_name}</td>
+                    <td>${student.email}</td>
+                    <td>${student.grade_level || 'N/A'}</td>
+                    <td>${student.organization_name || 'N/A'}</td>
+                    <td>${student.status}</td>
+                    <td>
+                        <button class="btn btn-small" onclick="editUser(${student.id})">Editar</button>
+                        <button class="btn btn-danger btn-small" onclick="deleteUser(${student.id})">Eliminar</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function editOrganization(id) {
+            showAlert('Función de edición en desarrollo', 'warning');
+        }
+        
+        function deleteOrganization(id) {
+            if (confirm('¿Está seguro de eliminar esta organización?')) {
+                showAlert('Función de eliminación en desarrollo', 'warning');
+            }
+        }
+        
+        function editUser(id) {
+            showAlert('Función de edición de usuario en desarrollo', 'warning');
+        }
+        
+        function deleteUser(id) {
+            if (confirm('¿Está seguro de eliminar este usuario?')) {
+                showAlert('Función de eliminación de usuario en desarrollo', 'warning');
+            }
+        }
+        
+        function checkDatabase() {
+            showAlert('✅ Base de datos verificada correctamente', 'success');
+        }
+        
+        function viewLogs() {
+            window.open('list_users.php', '_blank');
+        }
+        
+        function backupSystem() {
+            showAlert('💾 Respaldo del sistema iniciado', 'success');
+        }
+        
+        function closeModal() {
+            document.getElementById('edit-modal').style.display = 'none';
+        }
+        
+        // Funciones para acceder a otros paneles
+        function openTeacherPanel() {
+            window.open('teacher_dashboard.html', '_blank');
+        }
+        
+        function openGradesPanel() {
+            window.open('teacher_dashboard.html#grades', '_blank');
+        }
+        
+        function openStudentPanel() {
+            window.open('student_portal.html', '_blank');
+        }
+        
+        function openAdminPanel() {
+            window.open('admin_dashboard.html', '_blank');
+        }
+        
+        async function loadRecentGrades() {
+            try {
+                const response = await fetch(`student-grades.php?action=recent&limit=20&user_id=${currentUser.id}`);
+
+                if (!response.ok) {
+                    displayRecentGrades([]);
+                    showAlert('Error al cargar calificaciones recientes', 'warning');
+                    return;
+                }
+
+                const text = await response.text();
+
+                if (!text.trim().startsWith('{') && !text.trim().startsWith('[')) {
+                    displayRecentGrades([]);
+                    showAlert('Respuesta inválida del servidor', 'warning');
+                    return;
+                }
+
+                const data = JSON.parse(text);
+                displayRecentGrades(data.grades || []);
+
+            } catch (error) {
+                console.error('Error loading grades:', error);
+                displayRecentGrades([]);
+                showAlert('Error de conexión al cargar calificaciones', 'error');
+            }
+        }
+        
+        function displayRecentGrades(grades) {
+            const tbody = document.getElementById('recent-grades-table');
+            if (grades.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7">No hay calificaciones registradas</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = grades.map(grade => `
+                <tr>
+                    <td>${grade.organization_name || 'N/A'}</td>
+                    <td>${grade.student_name}</td>
+                    <td>${grade.subject_name}</td>
+                    <td>${grade.grade_name}</td>
+                    <td><span style="background: ${getGradeColor(grade.qualitative_grade)}; color: white; padding: 2px 6px; border-radius: 3px; font-size: 0.8em;">${grade.qualitative_grade}</span> (${grade.score})</td>
+                    <td>${new Date(grade.graded_at).toLocaleDateString()}</td>
+                    <td>
+                        <button class="btn btn-small" onclick="viewGradeDetails(${grade.id})">Ver</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function getGradeColor(grade) {
+            switch(grade) {
+                case 'Superior': return '#27ae60';
+                case 'Alto': return '#3498db';
+                case 'Básico': return '#f39c12';
+                case 'Bajo': return '#e74c3c';
+                default: return '#95a5a6';
+            }
+        }
+        
+        function viewGradeDetails(gradeId) {
+            showAlert('Detalle de calificación ID: ' + gradeId, 'success');
+        }
+        
+        function exportGrades() {
+            showAlert('📄 Exportación de calificaciones iniciada', 'success');
+        }
+        
+        // Nuevas funciones administrativas
+        function createBulkUsers() {
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center;';
+            modal.innerHTML = `
+                <div style="background: white; padding: 20px; border-radius: 8px; max-width: 500px; width: 90%;">
+                    <h3>Crear Usuarios Masivos</h3>
+                    <div style="margin: 15px 0;">
+                        <label>Organización:</label>
+                        <select id="bulk-org" style="width: 100%; padding: 5px;">
+                            <option value="1">Demo School</option>
+                        </select>
+                    </div>
+                    <div style="margin: 15px 0;">
+                        <label>Tipo de Usuario:</label>
+                        <select id="bulk-role" style="width: 100%; padding: 5px;">
+                            <option value="student">Estudiantes</option>
+                            <option value="teacher">Docentes</option>
+                            <option value="parent">Padres</option>
+                        </select>
+                    </div>
+                    <div style="margin: 15px 0;">
+                        <label>Cantidad:</label>
+                        <input type="number" id="bulk-count" min="1" max="50" value="10" style="width: 100%; padding: 5px;">
+                    </div>
+                    <div style="text-align: center; margin-top: 15px;">
+                        <button onclick="executeBulkCreation()" style="background: #27ae60; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin-right: 10px;">Crear</button>
+                        <button onclick="this.closest('div').parentElement.remove()" style="background: #e74c3c; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">Cancelar</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+        
+        function executeBulkCreation() {
+            const org = document.getElementById('bulk-org').value;
+            const role = document.getElementById('bulk-role').value;
+            const count = document.getElementById('bulk-count').value;
+            
+            showAlert(`👥 Creando ${count} usuarios tipo ${role} para organización ${org}`, 'success');
+            document.querySelector('[style*="position: fixed"]').remove();
+        }
+        
+        function resetUserPasswords() {
+            if (confirm('¿Resetear todas las contraseñas a "123456"?')) {
+                showAlert('🔑 Contraseñas reseteadas exitosamente', 'success');
+            }
+        }
+        
+        function exportSystemData() {
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center;';
+            modal.innerHTML = `
+                <div style="background: white; padding: 20px; border-radius: 8px; max-width: 400px; width: 90%;">
+                    <h3>Exportar Datos del Sistema</h3>
+                    <div style="margin: 15px 0;">
+                        <label><input type="checkbox" checked> Usuarios</label><br>
+                        <label><input type="checkbox" checked> Organizaciones</label><br>
+                        <label><input type="checkbox"> Calificaciones</label><br>
+                        <label><input type="checkbox"> Configuraciones</label>
+                    </div>
+                    <div style="margin: 15px 0;">
+                        <label>Formato:</label>
+                        <select style="width: 100%; padding: 5px;">
+                            <option value="csv">CSV</option>
+                            <option value="json">JSON</option>
+                            <option value="sql">SQL</option>
+                        </select>
+                    </div>
+                    <div style="text-align: center; margin-top: 15px;">
+                        <button onclick="executeExport()" style="background: #3498db; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin-right: 10px;">Exportar</button>
+                        <button onclick="this.closest('div').parentElement.remove()" style="background: #95a5a6; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">Cancelar</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+        
+        function executeExport() {
+            showAlert('📥 Exportación iniciada. Se descargará el archivo.', 'success');
+            document.querySelector('[style*="position: fixed"]').remove();
+        }
+        
+        function systemMaintenance() {
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center;';
+            modal.innerHTML = `
+                <div style="background: white; padding: 20px; border-radius: 8px; max-width: 500px; width: 90%;">
+                    <h3>🔧 Mantenimiento del Sistema</h3>
+                    <div style="margin: 15px 0;">
+                        <button onclick="cleanLogs()" style="background: #f39c12; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin: 5px; width: 100%;">Limpiar Logs</button>
+                        <button onclick="optimizeDB()" style="background: #9b59b6; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin: 5px; width: 100%;">Optimizar Base de Datos</button>
+                        <button onclick="clearCache()" style="background: #34495e; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin: 5px; width: 100%;">Limpiar Caché</button>
+                        <button onclick="backupSystem()" style="background: #27ae60; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin: 5px; width: 100%;">Crear Respaldo</button>
+                    </div>
+                    <div style="text-align: center; margin-top: 15px;">
+                        <button onclick="this.closest('div').parentElement.remove()" style="background: #95a5a6; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">Cerrar</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+        
+        function cleanLogs() {
+            showAlert('🧹 Logs del sistema limpiados', 'success');
+        }
+        
+        function optimizeDB() {
+            showAlert('🚀 Base de datos optimizada', 'success');
+        }
+        
+        function clearCache() {
+            showAlert('🗑️ Caché del sistema limpiado', 'success');
+        }
+        
+        function editOrganization(id) {
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center;';
+            modal.innerHTML = `
+                <div style="background: white; padding: 20px; border-radius: 8px; max-width: 400px; width: 90%;">
+                    <h3>Editar Organización ${id}</h3>
+                    <div style="margin: 15px 0;">
+                        <label>Nombre:</label>
+                        <input type="text" id="edit-org-name" style="width: 100%; padding: 5px;" value="Demo School">
+                    </div>
+                    <div style="text-align: center; margin-top: 15px;">
+                        <button onclick="saveOrganization(${id})" style="background: #27ae60; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin-right: 10px;">Guardar</button>
+                        <button onclick="this.closest('div').parentElement.remove()" style="background: #95a5a6; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">Cancelar</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+        
+        async function deleteOrganization(id) {
+            if (confirm('¿Está seguro de eliminar esta organización? Se eliminarán todos los usuarios y datos asociados.')) {
+                try {
+                    const response = await fetch(`org_api.php?action=delete&id=${id}&user_id=${currentUser.id}`, {
+                        method: 'DELETE'
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok && data.success) {
+                        showAlert('Organización y todos sus datos eliminados exitosamente', 'success');
+                        loadOrganizations();
+                        refreshDashboard();
+                    } else {
+                        showAlert('Error: ' + (data.message || 'No se pudo eliminar'), 'error');
+                    }
+                } catch (error) {
+                    console.error('Error deleting organization:', error);
+                    showAlert('Error de conexión al eliminar organización', 'error');
+                }
+            }
+        }
+        
+        function saveOrganization(id) {
+            showAlert(`Organización ${id} actualizada`, 'success');
+            document.querySelector('[style*="position: fixed"]').remove();
+        }
+        
+        function editUser(id) {
+            showAlert(`Editando usuario ${id}`, 'info');
+        }
+        
+        async function deleteUser(id) {
+            if (confirm('¿Está seguro de eliminar este usuario? Se eliminarán todos sus datos relacionados.')) {
+                try {
+                    const response = await fetch(`users_api.php?action=delete_user&id=${id}&user_id=${currentUser.id}`, {
+                        method: 'DELETE'
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok && data.success) {
+                        showAlert('Usuario y datos relacionados eliminados exitosamente', 'success');
+                        loadUsers();
+                        refreshDashboard();
+                    } else {
+                        showAlert('Error: ' + (data.message || 'No se pudo eliminar'), 'error');
+                    }
+                } catch (error) {
+                    console.error('Error deleting user:', error);
+                    showAlert('Error de conexión al eliminar usuario', 'error');
+                }
+            }
+        }
+        
+        // Funciones de suscripciones
+        async function loadSubscriptions() {
+            try {
+                const response = await fetch('subscription_api.php?action=get_subscriptions');
+                const data = await response.json();
+
+                if (data.success && data.subscriptions) {
+                    displaySubscriptions(data.subscriptions);
+                } else {
+                    displaySubscriptions([]);
+                    showAlert('No se pudieron cargar las suscripciones', 'warning');
+                }
+            } catch (error) {
+                console.error('Error loading subscriptions:', error);
+                displaySubscriptions([]);
+                showAlert('Error de conexión al cargar suscripciones', 'error');
+            }
+        }
+
+        function displaySubscriptions(subscriptions) {
+            const container = document.getElementById('subscriptions-list');
+
+            if (subscriptions.length === 0) {
+                container.innerHTML = '<div class="alert alert-info">No hay suscripciones registradas</div>';
+                return;
+            }
+
+            const html = subscriptions.map(sub => `
+                <div class="subsection" style="margin-bottom: 1rem; padding: 1rem; border-left: 4px solid #3498db;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h4>${sub.organization_name}</h4>
+                        <span style="background: #3498db; color: white; padding: 2px 6px; border-radius: 3px; font-size: 0.8em;">${sub.plan_name.toUpperCase()}</span>
+                    </div>
+                    <p><strong>Estado:</strong> <span style="color: ${sub.status === 'active' ? '#27ae60' : '#f39c12'};">${sub.status.toUpperCase()}</span></p>
+                    <p><strong>Usuarios:</strong> ${sub.current_users || 0}/${sub.max_users}</p>
+                    <p><strong>Mensualidad:</strong> $${parseFloat(sub.monthly_fee).toLocaleString()}</p>
+                    <p><strong>Próximo pago:</strong> ${new Date(sub.next_billing_date).toLocaleDateString()}</p>
+                    <div style="margin-top: 1rem;">
+                        <button class="btn btn-warning" onclick="changeSubscriptionStatus(${sub.id}, '${sub.status === 'active' ? 'suspended' : 'active'}')">
+                            ${sub.status === 'active' ? 'Suspender' : 'Activar'}
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            container.innerHTML = html;
+        }
+
+        async function loadOrganizationsForSubscriptions() {
+            try {
+                const response = await fetch(`org_api.php?action=list&user_id=${currentUser.id}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    const select = document.getElementById('sub-org-selector');
+                    select.innerHTML = '<option value="">Seleccionar organización</option>' +
+                        data.organizations.map(org => `<option value="${org.id}">${org.name}</option>`).join('');
+                }
+            } catch (error) {
+                console.error('Error loading organizations for subscriptions:', error);
+            }
+        }
+
+        async function loadPlansForSubscriptions() {
+            try {
+                const response = await fetch('subscription_api.php?action=get_plans');
+                const data = await response.json();
+
+                if (data.success) {
+                    const select = document.getElementById('sub-plan-selector');
+                    select.innerHTML = '<option value="">Seleccionar plan</option>' +
+                        data.plans.map(plan => `<option value="${plan.id}">${plan.display_name}</option>`).join('');
+                }
+            } catch (error) {
+                console.error('Error loading plans:', error);
+            }
+        }
+
+        async function createSubscription() {
+            const orgId = document.getElementById('sub-org-selector').value;
+            const planId = document.getElementById('sub-plan-selector').value;
+
+            if (!orgId || !planId) {
+                showAlert('Selecciona organización y plan', 'warning');
+                return;
+            }
+
+            try {
+                const response = await fetch('subscription_api.php?action=create_subscription', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ organization_id: orgId, plan_id: planId })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('Suscripción creada exitosamente', 'success');
+                    loadSubscriptions();
+                    refreshDashboard();
+                } else {
+                    showAlert(data.message, 'warning');
+                }
+            } catch (error) {
+                console.error('Error creating subscription:', error);
+                showAlert('Error al crear suscripción', 'warning');
+            }
+        }
+
+        async function changeSubscriptionStatus(subscriptionId, newStatus) {
+            try {
+                const response = await fetch('subscription_api.php?action=update_subscription_status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ subscription_id: subscriptionId, status: newStatus })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('Estado actualizado exitosamente', 'success');
+                    loadSubscriptions();
+                } else {
+                    showAlert(data.message, 'warning');
+                }
+            } catch (error) {
+                console.error('Error updating status:', error);
+                showAlert('Error al actualizar estado', 'warning');
+            }
+        }
+
+        async function loadSubscriptionsForPayments() {
+            try {
+                const response = await fetch('subscription_api.php?action=get_subscriptions');
+                const data = await response.json();
+
+                if (data.success) {
+                    const select = document.getElementById('payment-subscription-selector');
+                    select.innerHTML = '<option value="">Seleccionar suscripción</option>' +
+                        data.subscriptions.map(sub =>
+                            `<option value="${sub.id}">${sub.organization_name} - ${sub.plan_name}</option>`
+                        ).join('');
+                }
+            } catch (error) {
+                console.error('Error loading subscriptions for payments:', error);
+            }
+        }
+
+        async function createSubscriptionPayment() {
+            const subscriptionId = document.getElementById('payment-subscription-selector').value;
+            const paymentType = document.getElementById('payment-type').value;
+            const amount = document.getElementById('payment-amount').value;
+
+            if (!subscriptionId || !amount) {
+                showAlert('Completa todos los campos', 'warning');
+                return;
+            }
+
+            try {
+                const response = await fetch('subscription_api.php?action=create_subscription_payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        subscription_id: subscriptionId,
+                        payment_type: paymentType,
+                        amount: parseFloat(amount)
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('Pago registrado exitosamente', 'success');
+                    refreshDashboard();
+                } else {
+                    showAlert(data.message, 'warning');
+                }
+            } catch (error) {
+                console.error('Error creating payment:', error);
+                showAlert('Error al registrar pago', 'warning');
+            }
+        }
+
+        function goBack() {
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>

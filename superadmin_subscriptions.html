@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SuperAdmin - Gestión de Suscripciones</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; }
+        .nav { background: #5a67d8; padding: 0.5rem 1rem; overflow-x: auto; }
+        .nav-tabs { display: flex; gap: 1rem; flex-wrap: wrap; min-width: max-content; }
+        .nav-tab { background: none; border: none; color: white; padding: 0.5rem 1rem; cursor: pointer; border-radius: 4px; }
+        .nav-tab.active { background: #4c51bf; }
+        .container { max-width: 1400px; margin: 2rem auto; padding: 0 1rem; }
+        .section { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1rem; display: none; }
+        .section.active { display: block !important; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .stat-card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; }
+        .stat-number { font-size: 2rem; font-weight: bold; color: #667eea; }
+        .stat-label { color: #7f8c8d; margin-top: 0.5rem; }
+        .btn { background: #667eea; color: white; padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; margin-right: 0.5rem; }
+        .btn:hover { background: #5a67d8; }
+        .btn-success { background: #48bb78; }
+        .btn-warning { background: #ed8936; }
+        .btn-danger { background: #f56565; }
+        .table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        .table th, .table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #ddd; }
+        .table th { background: #f8f9fa; }
+        .alert { padding: 1rem; border-radius: 4px; margin-bottom: 1rem; }
+        .alert-success { background: #c6f6d5; color: #22543d; }
+        .alert-info { background: #bee3f8; color: #2a4365; }
+        .alert-warning { background: #fef5e7; color: #744210; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; }
+        .subscription-card { border-left: 4px solid #667eea; background: #f8f9fa; padding: 1rem; margin-bottom: 1rem; border-radius: 4px; }
+        .plan-badge { display: inline-block; padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.8rem; font-weight: bold; }
+        .plan-basic { background: #e6fffa; color: #234e52; }
+        .plan-intermediate { background: #ebf8ff; color: #2a4365; }
+        .plan-advanced { background: #fef5e7; color: #744210; }
+        .status-active { color: #48bb78; font-weight: bold; }
+        .status-trial { color: #ed8936; font-weight: bold; }
+        .status-suspended { color: #f56565; font-weight: bold; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
+        .modal-content { background: white; margin: 5% auto; padding: 2rem; border-radius: 8px; width: 90%; max-width: 600px; }
+        .close { float: right; font-size: 2rem; cursor: pointer; }
+
+        @media (max-width: 768px) {
+            .header { flex-direction: column; text-align: center; padding: 0.5rem; }
+            .nav-tabs { gap: 0.5rem; justify-content: center; }
+            .container { margin: 1rem auto; padding: 0 0.5rem; }
+            .stats-grid { grid-template-columns: 1fr; gap: 0.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🛠️ SuperAdmin - Gestión de Suscripciones SaaS</h1>
+        <div>
+            <span id="user-info">Cargando...</span>
+            <button class="btn" onclick="logout()">Cerrar Sesión</button>
+        </div>
+    </div>
+
+    <div class="nav">
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showSection('dashboard')">Dashboard</button>
+            <button class="nav-tab" onclick="showSection('subscriptions')">Suscripciones</button>
+            <button class="nav-tab" onclick="showSection('plans')">Planes</button>
+            <button class="nav-tab" onclick="showSection('payments')">Pagos</button>
+            <button class="nav-tab" onclick="showSection('reports')">Reportes</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="alerts"></div>
+
+        <!-- Dashboard Section -->
+        <div id="dashboard-section" class="section active">
+            <h2>📊 Dashboard de Suscripciones</h2>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="total-organizations">0</div>
+                    <div class="stat-label">Organizaciones</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="active-subscriptions">0</div>
+                    <div class="stat-label">Suscripciones Activas</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="monthly-revenue">0</div>
+                    <div class="stat-label">Ingresos Mensuales</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="pending-payments">0</div>
+                    <div class="stat-label">Pagos Pendientes</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>📈 Resumen por Planes</h3>
+                <div id="plans-summary">
+                    <div class="alert alert-info">Cargando resumen de planes...</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>⚠️ Suscripciones Próximas a Vencer</h3>
+                <div id="expiring-subscriptions">
+                    <div class="alert alert-info">Cargando suscripciones próximas a vencer...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Subscriptions Section -->
+        <div id="subscriptions-section" class="section">
+            <h2>📋 Gestión de Suscripciones</h2>
+
+            <div class="section">
+                <h3>Crear Nueva Suscripción</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Organización</label>
+                        <select id="org-selector">
+                            <option value="">Seleccionar organización</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Plan</label>
+                        <select id="plan-selector">
+                            <option value="">Seleccionar plan</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn btn-success" onclick="createSubscription()">Crear Suscripción</button>
+            </div>
+
+            <div class="section">
+                <h3>Suscripciones Activas</h3>
+                <div id="subscriptions-list">
+                    <div class="alert alert-info">Cargando suscripciones...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Plans Section -->
+        <div id="plans-section" class="section">
+            <h2>💼 Planes de Suscripción</h2>
+
+            <div id="plans-list">
+                <div class="alert alert-info">Cargando planes...</div>
+            </div>
+        </div>
+
+        <!-- Payments Section -->
+        <div id="payments-section" class="section">
+            <h2>💰 Gestión de Pagos</h2>
+
+            <div class="section">
+                <h3>Registrar Pago</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Suscripción</label>
+                        <select id="payment-subscription-selector">
+                            <option value="">Seleccionar suscripción</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo de Pago</label>
+                        <select id="payment-type">
+                            <option value="activation">Activación</option>
+                            <option value="monthly">Mensual</option>
+                            <option value="upgrade">Upgrade</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Monto ($)</label>
+                        <input type="number" id="payment-amount" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha de Pago</label>
+                        <input type="date" id="payment-date" value="<?php echo date('Y-m-d'); ?>">
+                    </div>
+                </div>
+                <button class="btn btn-success" onclick="createPayment()">Registrar Pago</button>
+            </div>
+
+            <div class="section">
+                <h3>Historial de Pagos</h3>
+                <div id="payments-history">
+                    <div class="alert alert-info">Cargando historial de pagos...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports Section -->
+        <div id="reports-section" class="section">
+            <h2>📊 Reportes y Analytics</h2>
+
+            <div class="section">
+                <h3>Reporte de Ingresos</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Período</label>
+                        <select id="report-period">
+                            <option value="month">Este Mes</option>
+                            <option value="quarter">Este Trimestre</option>
+                            <option value="year">Este Año</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn" onclick="generateRevenueReport()">Generar Reporte</button>
+            </div>
+
+            <div id="reports-content">
+                <div class="alert alert-info">Selecciona un período para generar el reporte</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para detalles -->
+    <div id="subscription-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="modal-title">Detalles de Suscripción</h2>
+            <div id="modal-content">
+                <div class="alert alert-info">Cargando detalles...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            loadDashboard();
+        });
+
+        function checkAuth() {
+            const user = JSON.parse(localStorage.getItem('studymate_user') || '{}');
+            if (!user.id || user.role !== 'superadmin') {
+                alert('Acceso denegado. Solo superadmin puede acceder.');
+                window.location.href = '/';
+                return;
+            }
+            currentUser = user;
+            document.getElementById('user-info').textContent = `${user.name} (SuperAdmin)`;
+        }
+
+        function showSection(section) {
+            document.querySelectorAll('[id$="-section"]').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+
+            document.getElementById(section + '-section').classList.add('active');
+            event.target.classList.add('active');
+
+            // Cargar datos específicos de cada sección
+            switch(section) {
+                case 'subscriptions':
+                    loadSubscriptions();
+                    loadOrganizations();
+                    loadPlans();
+                    break;
+                case 'plans':
+                    loadPlans();
+                    break;
+                case 'payments':
+                    loadSubscriptionsForPayments();
+                    loadPaymentsHistory();
+                    break;
+            }
+        }
+
+        async function loadDashboard() {
+            try {
+                const response = await fetch('subscription_api.php?action=get_subscriptions&page=1&limit=1000');
+                const data = await response.json();
+
+                if (data.success) {
+                    updateDashboardStats(data.subscriptions);
+                }
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+            }
+        }
+
+        function updateDashboardStats(subscriptions) {
+            const totalOrgs = new Set(subscriptions.map(s => s.organization_id)).size;
+            const activeSubs = subscriptions.filter(s => s.status === 'active').length;
+            const monthlyRevenue = subscriptions
+                .filter(s => s.status === 'active')
+                .reduce((sum, s) => sum + parseFloat(s.monthly_fee), 0);
+
+            document.getElementById('total-organizations').textContent = totalOrgs;
+            document.getElementById('active-subscriptions').textContent = activeSubs;
+            document.getElementById('monthly-revenue').textContent = '$' + monthlyRevenue.toLocaleString();
+            document.getElementById('pending-payments').textContent = subscriptions.filter(s =>
+                new Date(s.next_billing_date) < new Date()
+            ).length;
+        }
+
+        async function loadSubscriptions() {
+            try {
+                const response = await fetch('subscription_api.php?action=get_subscriptions');
+                const data = await response.json();
+
+                if (data.success) {
+                    displaySubscriptions(data.subscriptions);
+                }
+            } catch (error) {
+                console.error('Error loading subscriptions:', error);
+            }
+        }
+
+        function displaySubscriptions(subscriptions) {
+            const container = document.getElementById('subscriptions-list');
+
+            if (subscriptions.length === 0) {
+                container.innerHTML = '<div class="alert alert-info">No hay suscripciones registradas</div>';
+                return;
+            }
+
+            const html = subscriptions.map(sub => `
+                <div class="subscription-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h4>${sub.organization_name}</h4>
+                        <span class="plan-badge plan-${sub.plan_name.toLowerCase()}">${sub.plan_name}</span>
+                    </div>
+                    <p><strong>Estado:</strong> <span class="status-${sub.status}">${sub.status.toUpperCase()}</span></p>
+                    <p><strong>Usuarios:</strong> ${sub.current_users || 0}/${sub.max_users}</p>
+                    <p><strong>Mensualidad:</strong> $${parseFloat(sub.monthly_fee).toLocaleString()}</p>
+                    <p><strong>Próximo pago:</strong> ${new Date(sub.next_billing_date).toLocaleDateString()}</p>
+                    <div style="margin-top: 1rem;">
+                        <button class="btn" onclick="viewSubscriptionDetails(${sub.id})">Ver Detalles</button>
+                        <button class="btn btn-warning" onclick="changeSubscriptionStatus(${sub.id}, '${sub.status === 'active' ? 'suspended' : 'active'}')">
+                            ${sub.status === 'active' ? 'Suspender' : 'Activar'}
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            container.innerHTML = html;
+        }
+
+        async function loadPlans() {
+            try {
+                const response = await fetch('subscription_api.php?action=get_plans');
+                const data = await response.json();
+
+                if (data.success) {
+                    displayPlans(data.plans);
+                    populatePlanSelector(data.plans);
+                }
+            } catch (error) {
+                console.error('Error loading plans:', error);
+            }
+        }
+
+        function displayPlans(plans) {
+            const container = document.getElementById('plans-list');
+
+            const html = plans.map(plan => `
+                <div class="subscription-card">
+                    <h4>${plan.display_name}</h4>
+                    <p>${plan.description}</p>
+                    <p><strong>Activación:</strong> $${parseFloat(plan.activation_fee).toLocaleString()}</p>
+                    <p><strong>Mensual:</strong> $${parseFloat(plan.monthly_fee).toLocaleString()}</p>
+                    <p><strong>Máx. Usuarios:</strong> ${plan.max_users}</p>
+                    <div style="margin-top: 1rem;">
+                        <span class="plan-badge plan-${plan.name}">${plan.display_name}</span>
+                    </div>
+                </div>
+            `).join('');
+
+            container.innerHTML = html;
+        }
+
+        async function loadOrganizations() {
+            try {
+                // Asumiendo que hay una API para obtener organizaciones
+                const response = await fetch('org_api.php?action=get_organizations');
+                const data = await response.json();
+
+                if (data.success) {
+                    populateOrgSelector(data.organizations);
+                }
+            } catch (error) {
+                console.error('Error loading organizations:', error);
+            }
+        }
+
+        function populateOrgSelector(organizations) {
+            const selector = document.getElementById('org-selector');
+            selector.innerHTML = '<option value="">Seleccionar organización</option>' +
+                organizations.map(org => `<option value="${org.id}">${org.name}</option>`).join('');
+        }
+
+        function populatePlanSelector(plans) {
+            const selector = document.getElementById('plan-selector');
+            selector.innerHTML = '<option value="">Seleccionar plan</option>' +
+                plans.map(plan => `<option value="${plan.id}">${plan.display_name}</option>`).join('');
+        }
+
+        async function createSubscription() {
+            const orgId = document.getElementById('org-selector').value;
+            const planId = document.getElementById('plan-selector').value;
+
+            if (!orgId || !planId) {
+                showAlert('Selecciona organización y plan', 'warning');
+                return;
+            }
+
+            try {
+                const response = await fetch('subscription_api.php?action=create_subscription', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ organization_id: orgId, plan_id: planId })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('Suscripción creada exitosamente', 'success');
+                    loadSubscriptions();
+                    loadDashboard();
+                } else {
+                    showAlert(data.message, 'warning');
+                }
+            } catch (error) {
+                console.error('Error creating subscription:', error);
+                showAlert('Error al crear suscripción', 'warning');
+            }
+        }
+
+        async function changeSubscriptionStatus(subscriptionId, newStatus) {
+            try {
+                const response = await fetch('subscription_api.php?action=update_subscription_status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ subscription_id: subscriptionId, status: newStatus })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('Estado actualizado exitosamente', 'success');
+                    loadSubscriptions();
+                } else {
+                    showAlert(data.message, 'warning');
+                }
+            } catch (error) {
+                console.error('Error updating status:', error);
+                showAlert('Error al actualizar estado', 'warning');
+            }
+        }
+
+        async function loadSubscriptionsForPayments() {
+            try {
+                const response = await fetch('subscription_api.php?action=get_subscriptions');
+                const data = await response.json();
+
+                if (data.success) {
+                    const selector = document.getElementById('payment-subscription-selector');
+                    selector.innerHTML = '<option value="">Seleccionar suscripción</option>' +
+                        data.subscriptions.map(sub =>
+                            `<option value="${sub.id}">${sub.organization_name} - ${sub.plan_name}</option>`
+                        ).join('');
+                }
+            } catch (error) {
+                console.error('Error loading subscriptions for payments:', error);
+            }
+        }
+
+        async function createPayment() {
+            const subscriptionId = document.getElementById('payment-subscription-selector').value;
+            const paymentType = document.getElementById('payment-type').value;
+            const amount = document.getElementById('payment-amount').value;
+            const paymentDate = document.getElementById('payment-date').value;
+
+            if (!subscriptionId || !amount) {
+                showAlert('Completa todos los campos', 'warning');
+                return;
+            }
+
+            try {
+                const response = await fetch('subscription_api.php?action=create_subscription_payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        subscription_id: subscriptionId,
+                        payment_type: paymentType,
+                        amount: parseFloat(amount),
+                        due_date: paymentDate
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('Pago registrado exitosamente', 'success');
+                    loadPaymentsHistory();
+                    loadDashboard();
+                } else {
+                    showAlert(data.message, 'warning');
+                }
+            } catch (error) {
+                console.error('Error creating payment:', error);
+                showAlert('Error al registrar pago', 'warning');
+            }
+        }
+
+        async function loadPaymentsHistory() {
+            try {
+                // Obtener todas las suscripciones y luego sus pagos
+                const response = await fetch('subscription_api.php?action=get_subscriptions');
+                const data = await response.json();
+
+                if (data.success && data.subscriptions.length > 0) {
+                    // Por simplicidad, mostrar pagos de la primera suscripción
+                    const firstSub = data.subscriptions[0];
+                    const paymentsResponse = await fetch(`subscription_api.php?action=get_subscription_payments&subscription_id=${firstSub.id}`);
+                    const paymentsData = await paymentsResponse.json();
+
+                    if (paymentsData.success) {
+                        displayPaymentsHistory(paymentsData.payments);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading payments history:', error);
+            }
+        }
+
+        function displayPaymentsHistory(payments) {
+            const container = document.getElementById('payments-history');
+
+            if (payments.length === 0) {
+                container.innerHTML = '<div class="alert alert-info">No hay pagos registrados</div>';
+                return;
+            }
+
+            const html = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Organización</th>
+                            <th>Tipo</th>
+                            <th>Monto</th>
+                            <th>Fecha</th>
+                            <th>Estado</th>
+                            <th>Referencia</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${payments.map(payment => `
+                            <tr>
+                                <td>${payment.organization_name}</td>
+                                <td>${payment.payment_type}</td>
+                                <td>$${parseFloat(payment.amount).toLocaleString()}</td>
+                                <td>${new Date(payment.created_at).toLocaleDateString()}</td>
+                                <td>${payment.status}</td>
+                                <td>${payment.reference}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        function viewSubscriptionDetails(subscriptionId) {
+            // Implementar modal con detalles
+            showAlert('Funcionalidad de detalles próximamente', 'info');
+        }
+
+        function generateRevenueReport() {
+            showAlert('Funcionalidad de reportes próximamente', 'info');
+        }
+
+        function closeModal() {
+            document.getElementById('subscription-modal').style.display = 'none';
+        }
+
+        function showAlert(message, type) {
+            const alerts = document.getElementById('alerts');
+            alerts.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => alerts.innerHTML = '', 3000);
+        }
+
+        function logout() {
+            localStorage.removeItem('studymate_user');
+            localStorage.removeItem('studymate_token');
+            window.location.href = '/';
+        }
+    </script>
+</body>
+</html>

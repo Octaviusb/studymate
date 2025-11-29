@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyMate SaaS - Demo Estático</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8f9fa; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1rem; text-align: center; }
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+        .hero { background: white; padding: 3rem; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; margin-bottom: 2rem; }
+        .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-bottom: 2rem; }
+        .feature { background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.08); }
+        .feature h3 { color: #667eea; margin-bottom: 1rem; }
+        .demo-section { background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.08); margin-bottom: 2rem; }
+        .btn { background: #667eea; color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; text-decoration: none; display: inline-block; margin: 5px; }
+        .btn:hover { background: #5a6fd8; }
+        .btn-success { background: #28a745; }
+        .btn-success:hover { background: #218838; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 2rem 0; }
+        .stat { background: #f8f9fa; padding: 1.5rem; border-radius: 8px; text-align: center; }
+        .stat-number { font-size: 2.5rem; font-weight: bold; color: #667eea; }
+        .stat-label { color: #6c757d; margin-top: 0.5rem; }
+        .credentials { background: #e9ecef; padding: 1.5rem; border-radius: 8px; margin: 1rem 0; }
+        .org-card { background: #f8f9fa; padding: 1.5rem; border-radius: 8px; margin: 1rem 0; border-left: 4px solid #667eea; }
+        .alert { padding: 1rem; border-radius: 6px; margin: 1rem 0; }
+        .alert-info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .code { background: #f8f9fa; padding: 0.5rem; border-radius: 4px; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎓 StudyMate SaaS</h1>
+        <p>Plataforma Integral de Apoyo Estudiantil Multi-Tenant</p>
+    </div>
+
+    <div class="container">
+        <div class="hero">
+            <h2>🚀 Demostración Completa</h2>
+            <p>StudyMate ha sido convertido exitosamente a una arquitectura SaaS completa con núcleos separados</p>
+            
+            <div class="alert alert-info">
+                <strong>📋 Para ejecutar el demo completo:</strong><br>
+                1. Instalar XAMPP o configurar PHP<br>
+                2. Ejecutar: <span class="code">http://localhost/studymate/quick_populate.php</span><br>
+                3. Usar las credenciales de abajo para probar
+            </div>
+        </div>
+
+        <!-- Estadísticas -->
+        <div class="demo-section">
+            <h2>📊 Estadísticas del Sistema</h2>
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-number">5</div>
+                    <div class="stat-label">Organizaciones</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">27</div>
+                    <div class="stat-label">Usuarios Totales</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">15</div>
+                    <div class="stat-label">Clases Activas</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">45</div>
+                    <div class="stat-label">Tareas Asignadas</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Características -->
+        <div class="features">
+            <div class="feature">
+                <h3>🏢 Multi-Tenancy Completo</h3>
+                <p>Organizaciones completamente separadas con datos aislados, planes diferenciados y límites automáticos.</p>
+                <ul>
+                    <li>Datos por organización</li>
+                    <li>Planes: Free, Basic, Premium</li>
+                    <li>Límites automáticos</li>
+                </ul>
+            </div>
+            
+            <div class="feature">
+                <h3>👨‍🏫 Gestión de Clases</h3>
+                <p>Profesores crean clases, agregan estudiantes y asignan tareas que aparecen automáticamente en todos los estudiantes.</p>
+                <ul>
+                    <li>Creación de clases</li>
+                    <li>Asignación automática</li>
+                    <li>Seguimiento individual</li>
+                </ul>
+            </div>
+            
+            <div class="feature">
+                <h3>🤖 Chat Inteligente</h3>
+                <p>IA powered by Google Gemini con detección de crisis emocional y respuestas contextualizadas para Colombia.</p>
+                <ul>
+                    <li>Detección de crisis</li>
+                    <li>Alertas automáticas</li>
+                    <li>Recursos locales</li>
+                </ul>
+            </div>
+            
+            <div class="feature">
+                <h3>📈 Dashboard SaaS</h3>
+                <p>Panel completo de administración para super admins con gestión de organizaciones y estadísticas.</p>
+                <ul>
+                    <li>Gestión de organizaciones</li>
+                    <li>Estadísticas en tiempo real</li>
+                    <li>Control de planes</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Organizaciones -->
+        <div class="demo-section">
+            <h2>🏢 Organizaciones Creadas</h2>
+            
+            <div class="org-card">
+                <h4>Demo School (Premium)</h4>
+                <p><strong>Dominio:</strong> demo.studymate.com</p>
+                <p><strong>Límite:</strong> 500 usuarios</p>
+                <p><strong>Características:</strong> Chat IA, Analytics, Clases ilimitadas</p>
+            </div>
+            
+            <div class="org-card">
+                <h4>Colegio San Patricio (Premium)</h4>
+                <p><strong>Dominio:</strong> sanpatricio.edu.co</p>
+                <p><strong>Límite:</strong> 200 usuarios</p>
+                <p><strong>Características:</strong> Chat IA, Analytics, Clases ilimitadas</p>
+            </div>
+            
+            <div class="org-card">
+                <h4>Instituto Técnico Nacional (Basic)</h4>
+                <p><strong>Dominio:</strong> itn.edu.co</p>
+                <p><strong>Límite:</strong> 100 usuarios</p>
+                <p><strong>Características:</strong> Chat IA, Clases básicas</p>
+            </div>
+        </div>
+
+        <!-- Credenciales -->
+        <div class="demo-section">
+            <h2>🔑 Credenciales de Acceso</h2>
+            
+            <div class="credentials">
+                <h4>Super Administrador</h4>
+                <p><strong>Email:</strong> admin@studymate.com</p>
+                <p><strong>Password:</strong> admin123</p>
+                <p><strong>Acceso:</strong> Dashboard SaaS completo</p>
+            </div>
+            
+            <div class="credentials">
+                <h4>Profesor (María González)</h4>
+                <p><strong>Email:</strong> maria.gonzalez@org1.com</p>
+                <p><strong>Password:</strong> teacher123</p>
+                <p><strong>Acceso:</strong> Gestión de clases y estudiantes</p>
+            </div>
+            
+            <div class="credentials">
+                <h4>Estudiante (Juan Pérez)</h4>
+                <p><strong>Email:</strong> juan.perez@estudiante.org1.com</p>
+                <p><strong>Password:</strong> student123</p>
+                <p><strong>Acceso:</strong> Tareas, chat IA, bienestar</p>
+            </div>
+        </div>
+
+        <!-- Flujo de Demo -->
+        <div class="demo-section">
+            <h2>🎯 Flujo de Demostración</h2>
+            
+            <h3>1. Como Super Admin</h3>
+            <ol>
+                <li>Login con admin@studymate.com</li>
+                <li>Ir a Dashboard SaaS</li>
+                <li>Ver estadísticas de todas las organizaciones</li>
+                <li>Crear nueva organización</li>
+            </ol>
+            
+            <h3>2. Como Profesor</h3>
+            <ol>
+                <li>Login con maria.gonzalez@org1.com</li>
+                <li>Ver clases asignadas</li>
+                <li>Crear nueva tarea para la clase</li>
+                <li>Ver progreso de estudiantes</li>
+            </ol>
+            
+            <h3>3. Como Estudiante</h3>
+            <ol>
+                <li>Login con juan.perez@estudiante.org1.com</li>
+                <li>Ver tareas asignadas automáticamente</li>
+                <li>Completar una tarea</li>
+                <li>Usar chat inteligente</li>
+                <li>Registrar estado de ánimo</li>
+            </ol>
+        </div>
+
+        <!-- Enlaces -->
+        <div class="demo-section">
+            <h2>🔗 Enlaces de Acceso</h2>
+            <p>Una vez configurado PHP:</p>
+            
+            <a href="/dashboard_saas.html" class="btn">Dashboard SaaS</a>
+            <a href="/test_api.php?test=studymate" class="btn">Test APIs</a>
+            <a href="/index.html" class="btn btn-success">Frontend Principal</a>
+            <a href="/quick_populate.php" class="btn">Setup Automático</a>
+        </div>
+
+        <!-- Setup -->
+        <div class="demo-section">
+            <h2>⚙️ Configuración Rápida</h2>
+            
+            <div class="alert alert-success">
+                <strong>Opción 1: XAMPP (Recomendado)</strong><br>
+                1. Descargar XAMPP de apachefriends.org<br>
+                2. Copiar proyecto a C:\xampp\htdocs\studymate<br>
+                3. Iniciar Apache y MySQL<br>
+                4. Ir a http://localhost/studymate/quick_populate.php
+            </div>
+            
+            <div class="alert alert-info">
+                <strong>Opción 2: InfinityFree</strong><br>
+                1. Subir archivos a tu hosting<br>
+                2. Configurar base de datos<br>
+                3. Ejecutar setup desde tu dominio
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simulación de datos dinámicos
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animar números
+            const numbers = document.querySelectorAll('.stat-number');
+            numbers.forEach(num => {
+                const target = parseInt(num.textContent);
+                let current = 0;
+                const increment = target / 50;
+                const timer = setInterval(() => {
+                    current += increment;
+                    if (current >= target) {
+                        current = target;
+                        clearInterval(timer);
+                    }
+                    num.textContent = Math.floor(current);
+                }, 30);
+            });
+        });
+    </script>
+</body>
+</html>

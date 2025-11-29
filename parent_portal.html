@@ -1,0 +1,1143 @@
+ben <!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyMate - Portal Padres</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; }
+        .header { background: #8e44ad; color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; }
+        .nav { background: #a569bd; padding: 0.5rem 1rem; overflow-x: auto; }
+        .nav-tabs { display: flex; gap: 1rem; flex-wrap: wrap; min-width: max-content; }
+        .nav-tab { background: none; border: none; color: white; padding: 0.5rem 1rem; cursor: pointer; border-radius: 4px; }
+        .nav-tab.active { background: #7d3c98; }
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+        .section { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1rem; display: none; }
+        .section.active { display: block !important; }
+        .subsection { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1rem; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .stat-card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; }
+        .stat-number { font-size: 2rem; font-weight: bold; color: #8e44ad; }
+        .stat-label { color: #7f8c8d; margin-top: 0.5rem; }
+        .btn { background: #8e44ad; color: white; padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; margin-right: 0.5rem; }
+        .btn:hover { background: #7d3c98; }
+        .btn-success { background: #27ae60; }
+        .btn-warning { background: #f39c12; }
+        .btn-danger { background: #e74c3c; }
+        .table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        .table th, .table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #ddd; }
+        .table th { background: #f8f9fa; }
+        .alert { padding: 1rem; border-radius: 4px; margin-bottom: 1rem; }
+        .alert-success { background: #d4edda; color: #155724; }
+        .alert-info { background: #d1ecf1; color: #0c5460; }
+        .alert-warning { background: #fff3cd; color: #856404; }
+        .child-card { background: #f8f9fa; border-left: 4px solid #8e44ad; padding: 1rem; margin-bottom: 1rem; border-radius: 4px; }
+        .grade-excellent { color: #27ae60; font-weight: bold; }
+        .grade-good { color: #f39c12; font-weight: bold; }
+        .grade-poor { color: #e74c3c; font-weight: bold; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; }
+        .payment-pending { background: #fff3cd; border-left: 4px solid #f39c12; }
+        .payment-paid { background: #d4edda; border-left: 4px solid #27ae60; }
+        .payment-method.selected { border: 3px solid #8e44ad !important; background: #f8f9fa !important; }
+
+        /* Media Queries para responsividad */
+        @media (max-width: 768px) {
+            .header { flex-direction: column; text-align: center; padding: 0.5rem; }
+            .header h1 { font-size: 1.2rem; }
+            .nav-tabs { gap: 0.5rem; justify-content: center; }
+            .nav-tab { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+            .container { margin: 1rem auto; padding: 0 0.5rem; }
+            .section, .subsection { padding: 1rem; }
+            .stats-grid { grid-template-columns: 1fr; gap: 0.5rem; }
+            .stat-card { padding: 1rem; text-align: center; }
+            .stat-number { font-size: 1.5rem; }
+            .table { font-size: 0.8rem; }
+            .table th, .table td { padding: 0.5rem; }
+            .btn { padding: 0.4rem 0.8rem; font-size: 0.8rem; margin-right: 0.25rem; }
+            .child-card { padding: 0.75rem; }
+        }
+
+        @media (max-width: 480px) {
+            .nav-tabs { justify-content: center; flex-wrap: wrap; }
+            .nav-tab { padding: 0.3rem 0.6rem; font-size: 0.7rem; }
+            .section, .subsection { padding: 0.5rem; }
+            .stats-grid { margin-bottom: 1rem; }
+            .stat-card { padding: 0.75rem; }
+            .stat-number { font-size: 1.2rem; }
+            .stat-label { font-size: 0.9rem; }
+            .table th, .table td { padding: 0.4rem; font-size: 0.7rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>StudyMate - Portal de Padres</h1>
+        <div>
+            <span id="user-info">Cargando...</span>
+            <button class="btn" onclick="openCommunication()">Comunicación</button>
+            <button class="btn" onclick="goToProfile()">Mi Perfil</button>
+            <button class="btn" onclick="logout()">Cerrar Sesión</button>
+        </div>
+    </div>
+
+    <div class="nav">
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showSection('dashboard')">Dashboard</button>
+            <button class="nav-tab" onclick="showSection('children')">Mis Hijos</button>
+            <button class="nav-tab" onclick="showSection('grades')">Calificaciones</button>
+            <button class="nav-tab" onclick="showSection('tasks')">Tareas</button>
+            <button class="nav-tab" onclick="showSection('payments')">Pagos</button>
+            <button class="nav-tab" onclick="showSection('pay')">💳 Pagar</button>
+            <button class="nav-tab" onclick="showSection('communication')">Comunicación</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="alerts"></div>
+
+        <!-- Dashboard Section -->
+        <div id="dashboard-section" class="section active">
+            <h2>📊 Dashboard Familiar</h2>
+            
+            <div class="alert alert-info">
+                <strong>¡Bienvenido!</strong> Aquí puedes monitorear el progreso académico y financiero de tus hijos.
+            </div>
+
+            <div class="subsection">
+                <h3>👧👦 Resumen de Mis Hijos</h3>
+                <div id="children-summary">
+                    <div class="child-card">
+                        <h4>👧 Ana García López</h4>
+                        <p><strong>Grado:</strong> 10A | <strong>Promedio:</strong> <span class="grade-excellent">8.4</span> | <strong>Asistencia:</strong> 95%</p>
+                        <p><strong>Estado Financiero:</strong> <span style="color: #27ae60;">✅ Al día</span></p>
+                        <button class="btn" onclick="viewChildDetail(1)">Ver Detalles</button>
+                    </div>
+                    <div class="child-card">
+                        <h4>👦 Carlos García López</h4>
+                        <p><strong>Grado:</strong> 8B | <strong>Promedio:</strong> <span class="grade-good">7.2</span> | <strong>Asistencia:</strong> 88%</p>
+                        <p><strong>Estado Financiero:</strong> <span style="color: #f39c12;">⚠️ Pago pendiente</span></p>
+                        <button class="btn" onclick="viewChildDetail(2)">Ver Detalles</button>
+                        <button class="btn btn-warning" onclick="makePayment(2)">💰 Pagar</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="total-children">2</div>
+                    <div class="stat-label">Hijos Registrados</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="avg-grades">7.8</div>
+                    <div class="stat-label">Promedio Familiar</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="pending-payments">1</div>
+                    <div class="stat-label">Pagos Pendientes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="unread-messages">3</div>
+                    <div class="stat-label">Mensajes Sin Leer</div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>🎯 Acciones Rápidas</h3>
+                <button class="btn" onclick="showSection('grades')">📋 Ver Calificaciones</button>
+                <button class="btn btn-warning" onclick="showSection('payments')">💰 Gestionar Pagos</button>
+                <button class="btn btn-success" onclick="showSection('communication')">📧 Mensajes</button>
+            </div>
+        </div>
+
+        <!-- Children Section -->
+        <div id="children-section" class="section">
+            <h2>👧👦 Información de Mis Hijos</h2>
+            
+            <div class="subsection">
+                <h3>Seleccionar Hijo</h3>
+                <select id="child-selector" onchange="loadChildInfo()">
+                    <option value="1">Ana García López - 10A</option>
+                    <option value="2">Carlos García López - 8B</option>
+                </select>
+            </div>
+
+            <div class="subsection" id="child-info">
+                <h3>📋 Información Académica - Ana García López</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Grado Actual</label>
+                        <input type="text" value="10A" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Promedio General</label>
+                        <input type="text" value="8.4" readonly style="color: #27ae60; font-weight: bold;">
+                    </div>
+                    <div class="form-group">
+                        <label>Asistencia</label>
+                        <input type="text" value="95%" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Materias Cursando</label>
+                        <input type="text" value="6" readonly>
+                    </div>
+                </div>
+
+                <h4>📚 Materias y Promedios</h4>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Materia</th>
+                            <th>Docente</th>
+                            <th>Promedio</th>
+                            <th>Última Calificación</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Matemáticas</td>
+                            <td>Prof. García</td>
+                            <td><span class="grade-excellent">8.4</span></td>
+                            <td>9.0 (Examen)</td>
+                            <td><span style="color: #27ae60;">✅ Excelente</span></td>
+                        </tr>
+                        <tr>
+                            <td>Historia</td>
+                            <td>Prof. López</td>
+                            <td><span class="grade-good">7.6</span></td>
+                            <td>8.0 (Ensayo)</td>
+                            <td><span style="color: #f39c12;">⚠️ Bueno</span></td>
+                        </tr>
+                        <tr>
+                            <td>Química</td>
+                            <td>Prof. Martínez</td>
+                            <td><span class="grade-poor">6.2</span></td>
+                            <td>5.8 (Quiz)</td>
+                            <td><span style="color: #e74c3c;">❌ Requiere Atención</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Grades Section -->
+        <div id="grades-section" class="section">
+            <h2>📋 Seguimiento de Calificaciones</h2>
+            
+            <div class="subsection">
+                <h3>Filtros</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Hijo</label>
+                        <select id="grades-child-filter">
+                            <option value="">Todos los hijos</option>
+                            <option value="1">Ana García López</option>
+                            <option value="2">Carlos García López</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Período</label>
+                        <select id="grades-period-filter">
+                            <option value="current">Período Actual</option>
+                            <option value="previous">Período Anterior</option>
+                            <option value="all">Todos los Períodos</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn" onclick="loadGradesReport()">📊 Generar Reporte</button>
+            </div>
+
+            <div class="subsection">
+                <h3>📈 Análisis de Rendimiento</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number">8.4</div>
+                        <div class="stat-label">Mejor Promedio</div>
+                        <small>Ana - Matemáticas</small>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">6.2</div>
+                        <div class="stat-label">Requiere Atención</div>
+                        <small>Ana - Química</small>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">2</div>
+                        <div class="stat-label">Materias en Riesgo</div>
+                        <small>Ambos hijos</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>🎯 Recomendaciones</h3>
+                <div class="alert alert-warning">
+                    <strong>⚠️ Atención Requerida:</strong> Ana necesita refuerzo en Química. Considera solicitar tutoría adicional.
+                </div>
+                <div class="alert alert-info">
+                    <strong>💡 Sugerencia:</strong> Carlos muestra mejora en Matemáticas. Continúa con el apoyo actual.
+                </div>
+            </div>
+        </div>
+
+        <!-- Payments Section -->
+        <div id="payments-section" class="section">
+            <h2>Gestión de Pagos</h2>
+            
+            <div class="subsection">
+                <h3>Estado Financiero por Hijo</h3>
+                <div id="payment-status">
+                    <div class="child-card payment-paid">
+                        <h4>Ana García López</h4>
+                        <p><strong>Estado:</strong> <span style="color: #27ae60;">✅ Al día</span></p>
+                        <p><strong>Último Pago:</strong> $150,000 - 01/11/2024</p>
+                        <p><strong>Próximo Vencimiento:</strong> 01/12/2024</p>
+                    </div>
+                    <div class="child-card payment-pending">
+                        <h4>Carlos García López</h4>
+                        <p><strong>Estado:</strong> <span style="color: #f39c12;">⚠️ Pago Pendiente</span></p>
+                        <p><strong>Monto Pendiente:</strong> $150,000</p>
+                        <p><strong>Vencimiento:</strong> 01/11/2024 (Vencido)</p>
+                        <button class="btn btn-warning" onclick="makePayment(2)">💳 Pagar Ahora</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>Historial de Pagos</h3>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Hijo</th>
+                            <th>Concepto</th>
+                            <th>Período</th>
+                            <th>Monto</th>
+                            <th>Fecha Pago</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Ana García</td>
+                            <td>Pensión Mensual</td>
+                            <td>Noviembre 2024</td>
+                            <td>$150,000</td>
+                            <td>01/11/2024</td>
+                            <td><span style="color: #27ae60;">✅ Pagado</span></td>
+                        </tr>
+                        <tr>
+                            <td>Carlos García</td>
+                            <td>Pensión Mensual</td>
+                            <td>Noviembre 2024</td>
+                            <td>$150,000</td>
+                            <td>-</td>
+                            <td><span style="color: #e74c3c;">❌ Pendiente</span></td>
+                        </tr>
+                        <tr>
+                            <td>Ana García</td>
+                            <td>Pensión Mensual</td>
+                            <td>Octubre 2024</td>
+                            <td>$150,000</td>
+                            <td>01/10/2024</td>
+                            <td><span style="color: #27ae60;">✅ Pagado</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="subsection">
+                <h3>💳 Opciones de Pago</h3>
+                <button class="btn" onclick="payOnline()">💳 Pago en Línea</button>
+                <button class="btn btn-success" onclick="requestPaymentPlan()">📝 Solicitar Plan de Pagos</button>
+                <button class="btn btn-warning" onclick="downloadInvoice()">📄 Descargar Factura</button>
+            </div>
+        </div>
+
+        <!-- Tasks Section -->
+        <div id="tasks-section" class="section">
+            <h2>Seguimiento de Tareas</h2>
+            
+            <div class="subsection">
+                <h3>Filtros</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Hijo</label>
+                        <select id="tasks-child-filter">
+                            <option value="">Todos los hijos</option>
+                            <option value="1">Ana García López</option>
+                            <option value="2">Carlos García López</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Estado</label>
+                        <select id="tasks-status-filter">
+                            <option value="">Todos</option>
+                            <option value="pending">Pendientes</option>
+                            <option value="completed">Completadas</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn" onclick="filterTasks()">Filtrar</button>
+            </div>
+
+            <div class="subsection">
+                <h3>Tareas de Mis Hijos</h3>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Hijo</th>
+                            <th>Materia</th>
+                            <th>Tarea</th>
+                            <th>Fecha Entrega</th>
+                            <th>Estado</th>
+                            <th>Calificación</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Ana García</td>
+                            <td>Matemáticas</td>
+                            <td>Ejercicios de Álgebra</td>
+                            <td>15/12/2024</td>
+                            <td><span style="color: #f39c12;">Pendiente</span></td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>Carlos García</td>
+                            <td>Historia</td>
+                            <td>Ensayo Independencia</td>
+                            <td>18/12/2024</td>
+                            <td><span style="color: #f39c12;">Pendiente</span></td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>Ana García</td>
+                            <td>Química</td>
+                            <td>Laboratorio</td>
+                            <td>10/12/2024</td>
+                            <td><span style="color: #27ae60;">Completada</span></td>
+                            <td><span class="grade-excellent">9.2</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="subsection">
+                <h3>Resumen de Tareas</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number">5</div>
+                        <div class="stat-label">Tareas Pendientes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">12</div>
+                        <div class="stat-label">Tareas Completadas</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">8.4</div>
+                        <div class="stat-label">Promedio Tareas</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Communication Section -->
+        <div id="communication-section" class="section">
+            <h2>📧 Comunicación con la Institución</h2>
+            
+            <div class="subsection">
+                <h3>📨 Mensajes Recientes</h3>
+                <div id="messages-list">
+                    <div class="alert alert-info">
+                        <strong>Prof. García - Matemáticas</strong> (Hace 2 días)<br>
+                        Ana ha mostrado excelente progreso en álgebra. Felicitaciones por el apoyo en casa.
+                        <button class="btn" onclick="replyMessage(1)">↩️ Responder</button>
+                    </div>
+                    <div class="alert alert-warning">
+                        <strong>Prof. Martínez - Química</strong> (Hace 1 semana)<br>
+                        Ana necesita refuerzo en química orgánica. Recomiendo tutoría adicional.
+                        <button class="btn" onclick="replyMessage(2)">↩️ Responder</button>
+                    </div>
+                    <div class="alert alert-info">
+                        <strong>Coordinación Académica</strong> (Hace 2 semanas)<br>
+                        Recordatorio: Reunión de padres el 15 de diciembre a las 6:00 PM.
+                        <button class="btn" onclick="confirmAttendance()">✅ Confirmar Asistencia</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>✍️ Enviar Mensaje</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Destinatario</label>
+                        <select id="message-recipient">
+                            <option value="">Seleccionar destinatario</option>
+                            <option value="teacher_garcia">Prof. García - Matemáticas</option>
+                            <option value="teacher_martinez">Prof. Martínez - Química</option>
+                            <option value="coordination">Coordinación Académica</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Asunto</label>
+                        <input type="text" id="message-subject" placeholder="Asunto del mensaje">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Mensaje</label>
+                    <textarea id="message-content" rows="4" placeholder="Escriba su mensaje aquí..."></textarea>
+                </div>
+                <button class="btn" onclick="sendMessage()">📧 Enviar Mensaje</button>
+            </div>
+
+            <div class="subsection">
+                <h3>📅 Citas y Reuniones</h3>
+                <button class="btn btn-success" onclick="requestMeeting()">📅 Solicitar Cita</button>
+                <button class="btn" onclick="viewCalendar()">📆 Ver Calendario</button>
+            </div>
+        </div>
+
+        <!-- Pay Section -->
+        <div id="pay-section" class="section">
+            <h2>💳 Realizar Pago</h2>
+
+            <div class="alert alert-info">
+                <strong>💰 Sistema de Pagos Seguros</strong> - Realiza tus pagos de manera segura con diferentes métodos disponibles.
+            </div>
+
+            <div class="subsection">
+                <h3>👶 Seleccionar Hijo para Pago</h3>
+                <div class="form-group">
+                    <label>Hijo</label>
+                    <select id="pay-child-selector" onchange="loadChildPaymentInfo()">
+                        <option value="">Seleccionar hijo</option>
+                        <option value="1">Ana García López - 10A</option>
+                        <option value="2">Carlos García López - 8B</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>Seleccionar Método de Pago</h3>
+                <div class="stats-grid">
+                    <div class="stat-card payment-method" onclick="selectPaymentMethod('pse')" id="pse-card">
+                        <div class="stat-number">🏦</div>
+                        <div class="stat-label">PSE</div>
+                        <small>Pagos Seguros en Línea</small>
+                    </div>
+                    <div class="stat-card payment-method" onclick="selectPaymentMethod('nequi')" id="nequi-card">
+                        <div class="stat-number">📱</div>
+                        <div class="stat-label">Nequi</div>
+                        <small>Pago con celular</small>
+                    </div>
+                    <div class="stat-card payment-method" onclick="selectPaymentMethod('daviplata')" id="daviplata-card">
+                        <div class="stat-number">💳</div>
+                        <div class="stat-label">Daviplata</div>
+                        <small>Billetera digital</small>
+                    </div>
+                    <div class="stat-card payment-method" onclick="selectPaymentMethod('transfer')" id="transfer-card">
+                        <div class="stat-number">🏦</div>
+                        <div class="stat-label">Transferencia</div>
+                        <small>Bancaria tradicional</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection" id="payment-form" style="display: none;">
+                <h3 id="payment-method-title">Detalles del Pago</h3>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Concepto de Pago</label>
+                        <select id="payment-concept" onchange="updatePaymentAmount()">
+                            <option value="">Seleccionar concepto</option>
+                            <option value="pension" data-amount="150000">Pensión Mensual</option>
+                            <option value="insurance" data-amount="50000">Seguro Estudiantil</option>
+                            <option value="materials" data-amount="80000">Materiales Educativos</option>
+                            <option value="activities" data-amount="30000">Actividades Extracurriculares</option>
+                            <option value="other" data-amount="0">Otro concepto</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Monto a Pagar ($)</label>
+                        <input type="number" id="payment-amount" min="1000" step="1000" placeholder="0" readonly>
+                    </div>
+                </div>
+
+                <div class="form-group" id="custom-concept" style="display: none;">
+                    <label>Especificar concepto personalizado</label>
+                    <input type="text" id="custom-concept-text" placeholder="Ej: Matrícula extraordinaria">
+                </div>
+
+                <div class="form-group">
+                    <label>Descripción adicional (opcional)</label>
+                    <textarea id="payment-description" rows="2" placeholder="Detalles adicionales del pago..."></textarea>
+                </div>
+
+                <!-- PSE Payment Form -->
+                <div id="pse-form" class="payment-method-form" style="display: none;">
+                    <div class="alert alert-info">
+                        <strong>PSE - Pagos Seguros en Línea</strong><br>
+                        Serás redirigido al portal seguro de PSE para completar tu pago.
+                    </div>
+                    <div class="form-group">
+                        <label>Banco</label>
+                        <select id="pse-bank">
+                            <option value="">Seleccionar banco</option>
+                            <option value="bancolombia">Bancolombia</option>
+                            <option value="davivienda">Davivienda</option>
+                            <option value="bbva">BBVA</option>
+                            <option value="banco_bogota">Banco de Bogotá</option>
+                            <option value="banco_popular">Banco Popular</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Nequi Payment Form -->
+                <div id="nequi-form" class="payment-method-form" style="display: none;">
+                    <div class="alert alert-info">
+                        <strong>Nequi</strong><br>
+                        Recibirás un código de verificación en tu celular para confirmar el pago.
+                    </div>
+                    <div class="form-group">
+                        <label>Número de celular Nequi</label>
+                        <input type="tel" id="nequi-phone" placeholder="300 123 4567" pattern="[0-9]{10}">
+                    </div>
+                </div>
+
+                <!-- Daviplata Payment Form -->
+                <div id="daviplata-form" class="payment-method-form" style="display: none;">
+                    <div class="alert alert-info">
+                        <strong>Daviplata</strong><br>
+                        Escanea el código QR generado o usa tu número de celular para pagar.
+                    </div>
+                    <div class="form-group">
+                        <label>Número de celular Daviplata</label>
+                        <input type="tel" id="daviplata-phone" placeholder="300 123 4567" pattern="[0-9]{10}">
+                    </div>
+                    <div id="qr-container" style="text-align: center; display: none;">
+                        <p>Escanea este código QR con tu app Daviplata:</p>
+                        <div id="qr-code" style="display: inline-block; padding: 20px; border: 2px dashed #3498db; margin: 10px 0;">
+                            <div style="font-size: 48px;">📱</div>
+                            <p>Código QR generado</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transfer Payment Form -->
+                <div id="transfer-form" class="payment-method-form" style="display: none;">
+                    <div class="alert alert-warning">
+                        <strong>Transferencia Bancaria</strong><br>
+                        El procesamiento puede tomar 1-2 días hábiles. Incluye la referencia en el detalle del pago.
+                    </div>
+                    <div class="bank-details" style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0;">
+                        <h4>📋 Datos para la Transferencia:</h4>
+                        <p><strong>Banco:</strong> Bancolombia</p>
+                        <p><strong>Número de cuenta:</strong> 123-456789-0</p>
+                        <p><strong>Titular:</strong> StudyMate SaaS</p>
+                        <p><strong>NIT:</strong> 901.234.567-8</p>
+                        <p><strong>Referencia:</strong> <span id="transfer-reference">Se generará al procesar</span></p>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <button class="btn btn-success" onclick="processPayment()" id="pay-button">
+                        💳 Procesar Pago
+                    </button>
+                    <button class="btn" onclick="cancelPayment()">❌ Cancelar</button>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>📊 Historial de Pagos</h3>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Hijo</th>
+                                <th>Fecha</th>
+                                <th>Concepto</th>
+                                <th>Método</th>
+                                <th>Monto</th>
+                                <th>Estado</th>
+                                <th>Referencia</th>
+                            </tr>
+                        </thead>
+                        <tbody id="payment-history-table">
+                            <tr>
+                                <td colspan="7">Cargando historial de pagos...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="notifications.js"></script>
+    <script src="communication.js"></script>
+    <script>
+        let currentUser = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            loadDashboard();
+            loadRealStats();
+        });
+
+        function checkAuth() {
+            const user = JSON.parse(localStorage.getItem('studymate_user') || '{}');
+            if (!user.id || user.role !== 'parent') {
+                alert('Acceso denegado. Solo padres pueden acceder.');
+                window.location.href = '/';
+                return;
+            }
+            currentUser = user;
+            document.getElementById('user-info').textContent = `${user.name} (Padre/Madre)`;
+        }
+
+        function showSection(section) {
+            document.querySelectorAll('[id$="-section"]').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            
+            document.getElementById(section + '-section').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function loadDashboard() {
+            document.getElementById('total-children').textContent = '2';
+            document.getElementById('avg-grades').textContent = '7.8';
+            document.getElementById('pending-payments').textContent = '1';
+            document.getElementById('unread-messages').textContent = '3';
+        }
+
+        async function loadRealStats() {
+            try {
+                const response = await fetch(`dashboard_api.php?action=parent_stats&user_id=${currentUser.id}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('total-children').textContent = data.total_children || 0;
+                    document.getElementById('avg-grades').textContent = data.avg_grades || '0.0';
+                    document.getElementById('pending-payments').textContent = data.pending_payments || 0;
+                    document.getElementById('unread-messages').textContent = data.unread_messages || 0;
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        function viewChildDetail(childId) {
+            showSection('children');
+            document.getElementById('child-selector').value = childId;
+            loadChildInfo();
+        }
+
+        function loadChildInfo() {
+            const childId = document.getElementById('child-selector').value;
+            showAlert(`Cargando información del hijo ${childId}`, 'info');
+        }
+
+        function makePayment(childId) {
+            showSection('pay');
+            document.getElementById('pay-child-selector').value = childId;
+            loadChildPaymentInfo();
+        }
+
+        function loadGradesReport() {
+            showAlert('Generando reporte de calificaciones...', 'info');
+        }
+
+        function payOnline() {
+            showSection('pay');
+        }
+
+        function requestPaymentPlan() {
+            showAlert('Solicitud de plan de pagos enviada', 'success');
+        }
+
+        function downloadInvoice() {
+            showAlert('Descargando factura...', 'info');
+        }
+
+        function replyMessage(messageId) {
+            showAlert(`Responder mensaje ${messageId}`, 'info');
+        }
+
+        function confirmAttendance() {
+            showAlert('Asistencia confirmada', 'success');
+        }
+
+        function sendMessage() {
+            const recipient = document.getElementById('message-recipient').value;
+            const subject = document.getElementById('message-subject').value;
+            const content = document.getElementById('message-content').value;
+            
+            if (!recipient || !subject || !content) {
+                showAlert('Complete todos los campos', 'warning');
+                return;
+            }
+            
+            showAlert('Mensaje enviado exitosamente', 'success');
+            document.getElementById('message-subject').value = '';
+            document.getElementById('message-content').value = '';
+        }
+
+        function requestMeeting() {
+            showAlert('Solicitud de cita enviada', 'success');
+        }
+
+        function viewCalendar() {
+            showAlert('Abriendo calendario...', 'info');
+        }
+
+        function goToProfile() {
+            window.location.href = 'user_profile.html';
+        }
+
+        function showAlert(message, type) {
+            const alerts = document.getElementById('alerts');
+            alerts.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => alerts.innerHTML = '', 3000);
+        }
+
+        function logout() {
+            localStorage.removeItem('studymate_user');
+            localStorage.removeItem('studymate_token');
+            window.location.href = '/';
+        }
+
+        // Payment Functions
+        let selectedPaymentMethod = null;
+        let selectedChildId = null;
+
+        function selectPaymentMethod(method) {
+            selectedPaymentMethod = method;
+
+            // Reset all method cards
+            document.querySelectorAll('.payment-method').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            // Highlight selected method
+            document.getElementById(method + '-card').classList.add('selected');
+
+            // Show payment form
+            document.getElementById('payment-form').style.display = 'block';
+            document.getElementById('payment-method-title').textContent = `Detalles del Pago - ${method.toUpperCase()}`;
+
+            // Hide all method forms
+            document.querySelectorAll('.payment-method-form').forEach(form => {
+                form.style.display = 'none';
+            });
+
+            // Show selected method form
+            document.getElementById(method + '-form').style.display = 'block';
+        }
+
+        function loadChildPaymentInfo() {
+            selectedChildId = document.getElementById('pay-child-selector').value;
+            if (selectedChildId) {
+                showAlert(`Información de pagos cargada para hijo ${selectedChildId}`, 'info');
+            }
+        }
+
+        function updatePaymentAmount() {
+            const concept = document.getElementById('payment-concept').value;
+            const amountInput = document.getElementById('payment-amount');
+            const customConcept = document.getElementById('custom-concept');
+
+            if (concept === 'other') {
+                amountInput.value = '';
+                amountInput.readOnly = false;
+                customConcept.style.display = 'block';
+            } else {
+                const selectedOption = document.querySelector(`#payment-concept option[value="${concept}"]`);
+                const amount = selectedOption ? selectedOption.getAttribute('data-amount') : '0';
+                amountInput.value = amount;
+                amountInput.readOnly = true;
+                customConcept.style.display = 'none';
+            }
+        }
+
+        async function processPayment() {
+            if (!selectedChildId) {
+                showAlert('Selecciona un hijo primero', 'warning');
+                return;
+            }
+
+            if (!selectedPaymentMethod) {
+                showAlert('Selecciona un método de pago', 'warning');
+                return;
+            }
+
+            const concept = document.getElementById('payment-concept').value;
+            const amount = document.getElementById('payment-amount').value;
+            const description = document.getElementById('payment-description').value;
+
+            if (!concept || !amount) {
+                showAlert('Complete el concepto y monto del pago', 'warning');
+                return;
+            }
+
+            // Additional validation based on payment method
+            if (selectedPaymentMethod === 'nequi' || selectedPaymentMethod === 'daviplata') {
+                const phoneInput = document.getElementById(selectedPaymentMethod + '-phone');
+                if (!phoneInput.value || phoneInput.value.length !== 10) {
+                    showAlert('Ingresa un número de celular válido', 'warning');
+                    return;
+                }
+            }
+
+            if (selectedPaymentMethod === 'pse') {
+                const bankSelect = document.getElementById('pse-bank');
+                if (!bankSelect.value) {
+                    showAlert('Selecciona un banco', 'warning');
+                    return;
+                }
+            }
+
+            // Disable button during processing
+            const payButton = document.getElementById('pay-button');
+            payButton.disabled = true;
+            payButton.textContent = '⏳ Procesando...';
+
+            // Remover simulación - ahora usa la API real
+
+            try {
+                const paymentData = {
+                    student_id: selectedChildId,
+                    amount: parseFloat(amount),
+                    payment_method: selectedPaymentMethod,
+                    description: description || getConceptDescription(concept)
+                };
+
+                // Add method-specific data
+                if (selectedPaymentMethod === 'nequi' || selectedPaymentMethod === 'daviplata') {
+                    paymentData.phone = document.getElementById(selectedPaymentMethod + '-phone').value;
+                }
+
+                if (selectedPaymentMethod === 'pse') {
+                    paymentData.bank = document.getElementById('pse-bank').value;
+                }
+
+                console.log('Enviando datos de pago:', paymentData);
+
+                const response = await fetch('payments.handler.php?action=create_payment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(paymentData)
+                });
+
+                console.log('Respuesta HTTP:', response.status, response.statusText);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Error de respuesta:', errorText);
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                console.log('Datos de respuesta:', data);
+
+                if (data.success) {
+                    showAlert(`✅ ${data.message}`, 'success');
+
+                    // Handle different payment methods
+                    if (selectedPaymentMethod === 'pse' && data.payment_data && data.payment_data.bank_url) {
+                        // Redirect to PSE
+                        setTimeout(() => {
+                            window.open(data.payment_data.bank_url, '_blank');
+                        }, 2000);
+                    } else if (selectedPaymentMethod === 'daviplata' && data.payment_data && data.payment_data.qr_code) {
+                        // Show QR code
+                        document.getElementById('qr-container').style.display = 'block';
+                    } else if (selectedPaymentMethod === 'transfer') {
+                        // Show transfer reference
+                        document.getElementById('transfer-reference').textContent = data.reference || 'Referencia generada';
+                    }
+
+                    // Reload payment history
+                    loadPaymentHistory();
+
+                    // Reset form after success
+                    setTimeout(() => {
+                        cancelPayment();
+                    }, 3000);
+
+                } else {
+                    showAlert(`❌ Error: ${data.message || 'Error desconocido'}`, 'error');
+                }
+
+            } catch (error) {
+                console.error('Payment error details:', error);
+                showAlert(`❌ Error: ${error.message}`, 'error');
+            } finally {
+                payButton.disabled = false;
+                payButton.textContent = '💳 Procesar Pago';
+            }
+        }
+
+        function cancelPayment() {
+            selectedPaymentMethod = null;
+            selectedChildId = null;
+
+            // Reset form
+            document.getElementById('payment-form').style.display = 'none';
+            document.getElementById('payment-concept').value = '';
+            document.getElementById('payment-amount').value = '';
+            document.getElementById('payment-description').value = '';
+            document.getElementById('custom-concept').style.display = 'none';
+            document.getElementById('qr-container').style.display = 'none';
+
+            // Reset method cards
+            document.querySelectorAll('.payment-method').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            // Hide all method forms
+            document.querySelectorAll('.payment-method-form').forEach(form => {
+                form.style.display = 'none';
+            });
+        }
+
+        function getConceptDescription(concept) {
+            const descriptions = {
+                'pension': 'Pensión mensual escolar',
+                'insurance': 'Seguro estudiantil',
+                'materials': 'Materiales educativos',
+                'activities': 'Actividades extracurriculares',
+                'other': document.getElementById('custom-concept-text').value || 'Pago personalizado'
+            };
+            return descriptions[concept] || 'Pago educativo';
+        }
+
+        async function loadPaymentHistory() {
+            try {
+                const response = await fetch(`payments.handler.php?action=get_payment_history&student_id=${selectedChildId || 1}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    const tbody = document.getElementById('payment-history-table');
+                    tbody.innerHTML = data.payments.map(payment => `
+                        <tr>
+                            <td>${getChildName(payment.student_id)}</td>
+                            <td>${payment.formatted_date}</td>
+                            <td>${payment.description}</td>
+                            <td>${payment.payment_method.toUpperCase()}</td>
+                            <td>${payment.formatted_amount}</td>
+                            <td><span style="color: ${getStatusColor(payment.status)};">${getStatusText(payment.status)}</span></td>
+                            <td>${payment.reference}</td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error loading payment history:', error);
+            }
+        }
+
+        function getChildName(studentId) {
+            const names = {1: 'Ana García', 2: 'Carlos García'};
+            return names[studentId] || `Estudiante ${studentId}`;
+        }
+
+        function getStatusColor(status) {
+            const colors = {
+                'completed': '#27ae60',
+                'pending': '#f39c12',
+                'processing': '#3498db',
+                'failed': '#e74c3c',
+                'cancelled': '#95a5a6'
+            };
+            return colors[status] || '#95a5a6';
+        }
+
+        function getStatusText(status) {
+            const texts = {
+                'completed': 'Completado',
+                'pending': 'Pendiente',
+                'processing': 'Procesando',
+                'failed': 'Fallido',
+                'cancelled': 'Cancelado'
+            };
+            return texts[status] || status;
+        }
+
+        // Load payment history on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            if (document.getElementById('payment-history-table')) {
+                loadPaymentHistory();
+            }
+        });
+        
+        async function loadParentTasks() {
+            try {
+                const response = await fetch(`tasks_api.php?action=get_parent_tasks&parent_id=${currentUser.id}`);
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    displayParentTasks(data.tasks);
+                }
+            } catch (error) {
+                console.error('Error cargando tareas:', error);
+            }
+        }
+        
+        function displayParentTasks(tasks) {
+            const tableBody = document.querySelector('#tasks-section table tbody');
+            if (tableBody) {
+                tableBody.innerHTML = tasks.map(task => {
+                    const statusColor = task.submission_status === 'pending' ? '#f39c12' : '#27ae60';
+                    const statusText = task.submission_status === 'pending' ? 'Pendiente' : 'Completada';
+                    
+                    return `
+                        <tr>
+                            <td>${task.student_name}</td>
+                            <td>${task.subject_name}</td>
+                            <td>${task.title}</td>
+                            <td>${new Date(task.due_date).toLocaleDateString()}</td>
+                            <td><span style="color: ${statusColor};">${statusText}</span></td>
+                            <td>${task.score ? `<span class="grade-excellent">${task.score}</span>` : '-'}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+            
+            // Actualizar estadísticas
+            const pendingCount = tasks.filter(t => t.submission_status === 'pending').length;
+            const completedCount = tasks.filter(t => t.submission_status === 'graded').length;
+            const avgScore = tasks.filter(t => t.score).reduce((sum, t) => sum + parseFloat(t.score), 0) / tasks.filter(t => t.score).length || 0;
+            
+            const statCards = document.querySelectorAll('#tasks-section .stat-card .stat-number');
+            if (statCards.length >= 3) {
+                statCards[0].textContent = pendingCount;
+                statCards[1].textContent = completedCount;
+                statCards[2].textContent = avgScore.toFixed(1);
+            }
+        }
+        
+        function showSection(section) {
+            document.querySelectorAll('[id$="-section"]').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            
+            document.getElementById(section + '-section').classList.add('active');
+            event.target.classList.add('active');
+            
+            if (section === 'tasks') {
+                loadParentTasks();
+            }
+        }
+        
+        function filterTasks() {
+            showAlert('Filtrando tareas...', 'info');
+            loadParentTasks();
+        }
+    </script>
+</body>
+</html>

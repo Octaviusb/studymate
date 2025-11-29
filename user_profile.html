@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyMate - Mi Perfil</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; font-size: 16px; line-height: 1.5; }
+        .header { background: #2c3e50; color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+        .container { max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+
+        /* Media Queries para responsividad */
+        @media (max-width: 768px) {
+            .header { flex-direction: column; text-align: center; padding: 0.5rem; }
+            .header h1 { font-size: 1.2rem; }
+            .container { margin: 1rem auto; padding: 0 0.5rem; }
+            .profile-card { margin-bottom: 1rem; }
+            .profile-header { padding: 1rem; }
+            .profile-photo { width: 100px; height: 100px; font-size: 2rem; }
+            .profile-name { font-size: 1.2rem; }
+            .profile-body { padding: 1rem; }
+            .form-grid { grid-template-columns: 1fr; gap: 0.5rem; }
+            .btn { padding: 0.6rem 1rem; font-size: 0.9rem; }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 { font-size: 1rem; }
+            .container { padding: 0 0.25rem; }
+            .profile-header { padding: 0.75rem; }
+            .profile-photo { width: 80px; height: 80px; font-size: 1.5rem; }
+            .profile-name { font-size: 1rem; }
+            .profile-body { padding: 0.75rem; }
+            .section h3 { font-size: 1rem; }
+            .form-group input, .form-group select, .form-group textarea { font-size: 0.9rem; padding: 0.5rem; }
+            .btn { padding: 0.5rem 0.8rem; font-size: 0.8rem; }
+        }
+        .profile-card { background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); overflow: hidden; }
+        .profile-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 2rem; text-align: center; color: white; }
+        .profile-photo { width: 120px; height: 120px; border-radius: 50%; border: 4px solid white; margin: 0 auto 1rem; background: #ddd; display: flex; align-items: center; justify-content: center; font-size: 3rem; }
+        .profile-name { font-size: 1.5rem; font-weight: bold; margin-bottom: 0.5rem; }
+        .profile-role { opacity: 0.9; }
+        .profile-body { padding: 2rem; }
+        .section { margin-bottom: 2rem; }
+        .section h3 { color: #2c3e50; margin-bottom: 1rem; border-bottom: 2px solid #3498db; padding-bottom: 0.5rem; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: bold; color: #555; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #3498db; box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2); }
+        .btn { background: #3498db; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; }
+        .btn:hover { background: #2980b9; }
+        .btn-success { background: #27ae60; }
+        .btn-secondary { background: #95a5a6; }
+        .alert { padding: 1rem; border-radius: 6px; margin-bottom: 1rem; }
+        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .alert-warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .required { color: #e74c3c; }
+        .photo-upload { position: relative; display: inline-block; }
+        .photo-upload input[type="file"] { position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+        .incomplete-warning { background: #fff3cd; border: 1px solid #ffeaa7; color: #856404; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Mi Perfil</h1>
+        <div>
+            <button class="btn btn-secondary" onclick="goBack()">← Volver</button>
+            <button class="btn" onclick="logout()">Cerrar Sesión</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="alerts"></div>
+        
+        <div id="incomplete-warning" class="incomplete-warning" style="display: none;">
+            <strong>⚠️ Perfil Incompleto</strong><br>
+            Por favor completa toda tu información personal. Es obligatorio para usar el sistema.
+        </div>
+
+        <div class="profile-card">
+            <div class="profile-header">
+                <div class="profile-photo photo-upload" id="profile-photo">
+                    👤
+                    <input type="file" id="photo-input" accept="image/*" onchange="uploadPhoto()">
+                </div>
+                <div class="profile-name" id="profile-name">Cargando...</div>
+                <div class="profile-role" id="profile-role">Cargando...</div>
+            </div>
+
+            <div class="profile-body">
+                <form id="profile-form">
+                    <!-- Información Personal -->
+                    <div class="section">
+                        <h3>📋 Información Personal</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Tipo de Documento <span class="required">*</span></label>
+                                <select id="document-type" required>
+                                    <option value="">Seleccionar</option>
+                                    <option value="CC">Cédula de Ciudadanía</option>
+                                    <option value="TI">Tarjeta de Identidad</option>
+                                    <option value="CE">Cédula de Extranjería</option>
+                                    <option value="PP">Pasaporte</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Número de Documento <span class="required">*</span></label>
+                                <input type="text" id="document-number" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Fecha de Nacimiento <span class="required">*</span></label>
+                                <input type="date" id="birth-date" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Género <span class="required">*</span></label>
+                                <select id="gender" required>
+                                    <option value="">Seleccionar</option>
+                                    <option value="M">Masculino</option>
+                                    <option value="F">Femenino</option>
+                                    <option value="O">Otro</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Información de Contacto -->
+                    <div class="section">
+                        <h3>📞 Información de Contacto</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Teléfono Fijo</label>
+                                <input type="tel" id="phone">
+                            </div>
+                            <div class="form-group">
+                                <label>Teléfono Móvil <span class="required">*</span></label>
+                                <input type="tel" id="mobile" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Ciudad <span class="required">*</span></label>
+                                <input type="text" id="city" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Departamento <span class="required">*</span></label>
+                                <input type="text" id="state" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Dirección <span class="required">*</span></label>
+                            <textarea id="address" rows="2" required></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Información Académica (solo para estudiantes) -->
+                    <div class="section" id="academic-section" style="display: none;">
+                        <h3>🎓 Información Académica</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Grado Actual</label>
+                                <select id="current-grade">
+                                    <option value="">Seleccionar grado</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Código Estudiantil</label>
+                                <input type="text" id="student-code">
+                            </div>
+                            <div class="form-group">
+                                <label>Fecha de Matrícula</label>
+                                <input type="date" id="enrollment-date">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Información del Acudiente (solo para estudiantes) -->
+                    <div class="section" id="guardian-section" style="display: none;">
+                        <h3>👨‍👩‍👧‍👦 Información del Acudiente</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Nombre Completo <span class="required">*</span></label>
+                                <input type="text" id="guardian-name" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Documento</label>
+                                <input type="text" id="guardian-document">
+                            </div>
+                            <div class="form-group">
+                                <label>Teléfono <span class="required">*</span></label>
+                                <input type="tel" id="guardian-phone" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" id="guardian-email">
+                            </div>
+                            <div class="form-group">
+                                <label>Parentesco <span class="required">*</span></label>
+                                <select id="guardian-relationship" required>
+                                    <option value="">Seleccionar</option>
+                                    <option value="padre">Padre</option>
+                                    <option value="madre">Madre</option>
+                                    <option value="abuelo">Abuelo</option>
+                                    <option value="abuela">Abuela</option>
+                                    <option value="tio">Tío</option>
+                                    <option value="tia">Tía</option>
+                                    <option value="otro">Otro</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Información de Emergencia -->
+                    <div class="section">
+                        <h3>🚨 Contacto de Emergencia</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Nombre Completo <span class="required">*</span></label>
+                                <input type="text" id="emergency-name" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Teléfono <span class="required">*</span></label>
+                                <input type="tel" id="emergency-phone" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Parentesco <span class="required">*</span></label>
+                                <input type="text" id="emergency-relationship" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Información Médica -->
+                    <div class="section">
+                        <h3>🏥 Información Médica</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Tipo de Sangre</label>
+                                <select id="blood-type">
+                                    <option value="">Seleccionar</option>
+                                    <option value="A+">A+</option>
+                                    <option value="A-">A-</option>
+                                    <option value="B+">B+</option>
+                                    <option value="B-">B-</option>
+                                    <option value="AB+">AB+</option>
+                                    <option value="AB-">AB-</option>
+                                    <option value="O+">O+</option>
+                                    <option value="O-">O-</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Alergias</label>
+                            <textarea id="allergies" rows="2" placeholder="Describe cualquier alergia conocida"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Condiciones Médicas</label>
+                            <textarea id="medical-conditions" rows="2" placeholder="Describe cualquier condición médica relevante"></textarea>
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 2rem;">
+                        <button type="submit" class="btn btn-success">💾 Guardar Perfil</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let userProfile = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            loadUserProfile();
+            loadGrades();
+            
+            document.getElementById('profile-form').addEventListener('submit', saveProfile);
+        });
+
+        function checkAuth() {
+            const user = JSON.parse(localStorage.getItem('studymate_user') || '{}');
+            if (!user.id) {
+                window.location.href = '/';
+                return;
+            }
+            currentUser = user;
+            
+            document.getElementById('profile-name').textContent = user.name;
+            document.getElementById('profile-role').textContent = user.role.toUpperCase();
+            
+            // Mostrar secciones según el rol
+            if (user.role === 'student') {
+                document.getElementById('academic-section').style.display = 'block';
+                document.getElementById('guardian-section').style.display = 'block';
+            }
+        }
+
+        async function loadUserProfile() {
+            try {
+                const response = await fetch(`profile_api.php?action=get&user_id=${currentUser.id}`);
+                const data = await response.json();
+                
+                if (response.ok && data.profile) {
+                    userProfile = data.profile;
+                    populateForm(data.profile);
+                    
+                    // Mostrar foto si existe
+                    if (data.profile.profile_photo) {
+                        const photoElement = document.getElementById('profile-photo');
+                        photoElement.innerHTML = `<img src="${data.profile.profile_photo}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;"><input type="file" id="photo-input" accept="image/*" onchange="uploadPhoto()">`;
+                    }
+                    
+                    if (!data.profile.profile_completed) {
+                        document.getElementById('incomplete-warning').style.display = 'block';
+                    }
+                } else {
+                    document.getElementById('incomplete-warning').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error loading profile:', error);
+            }
+        }
+
+        function populateForm(profile) {
+            const fields = [
+                'document-type', 'document-number', 'birth-date', 'gender',
+                'phone', 'mobile', 'city', 'state', 'address',
+                'current-grade', 'student-code', 'enrollment-date',
+                'guardian-name', 'guardian-document', 'guardian-phone', 'guardian-email', 'guardian-relationship',
+                'emergency-name', 'emergency-phone', 'emergency-relationship',
+                'blood-type', 'allergies', 'medical-conditions'
+            ];
+            
+            fields.forEach(field => {
+                const element = document.getElementById(field);
+                const value = profile[field.replace('-', '_')] || '';
+                if (element) {
+                    element.value = value;
+                }
+            });
+        }
+
+        async function saveProfile(e) {
+            e.preventDefault();
+            
+            const formData = {
+                user_id: currentUser.id,
+                document_type: document.getElementById('document-type').value,
+                document_number: document.getElementById('document-number').value,
+                birth_date: document.getElementById('birth-date').value,
+                gender: document.getElementById('gender').value,
+                phone: document.getElementById('phone').value,
+                mobile: document.getElementById('mobile').value,
+                city: document.getElementById('city').value,
+                state: document.getElementById('state').value,
+                address: document.getElementById('address').value,
+                current_grade_id: document.getElementById('current-grade').value,
+                student_code: document.getElementById('student-code').value,
+                enrollment_date: document.getElementById('enrollment-date').value,
+                guardian_name: document.getElementById('guardian-name').value,
+                guardian_document: document.getElementById('guardian-document').value,
+                guardian_phone: document.getElementById('guardian-phone').value,
+                guardian_email: document.getElementById('guardian-email').value,
+                guardian_relationship: document.getElementById('guardian-relationship').value,
+                emergency_contact_name: document.getElementById('emergency-name').value,
+                emergency_contact_phone: document.getElementById('emergency-phone').value,
+                emergency_contact_relationship: document.getElementById('emergency-relationship').value,
+                blood_type: document.getElementById('blood-type').value,
+                allergies: document.getElementById('allergies').value,
+                medical_conditions: document.getElementById('medical-conditions').value
+            };
+
+            try {
+                const response = await fetch('profile_api.php?action=save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showAlert('✅ Perfil guardado exitosamente', 'success');
+                    document.getElementById('incomplete-warning').style.display = 'none';
+                } else {
+                    showAlert('❌ Error: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showAlert('❌ Error de conexión', 'error');
+            }
+        }
+
+        function showAlert(message, type) {
+            const alerts = document.getElementById('alerts');
+            alerts.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => alerts.innerHTML = '', 5000);
+        }
+
+        function goBack() {
+            window.history.back();
+        }
+
+        function logout() {
+            localStorage.removeItem('studymate_user');
+            localStorage.removeItem('studymate_token');
+            window.location.href = '/';
+        }
+
+        async function loadGrades() {
+            // Implementar carga de grados para el select
+        }
+
+        function uploadPhoto() {
+            const fileInput = document.getElementById('photo-input');
+            const file = fileInput.files[0];
+            
+            if (!file) return;
+            
+            // Validar tipo de archivo
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+            if (!allowedTypes.includes(file.type)) {
+                showAlert('❌ Tipo de archivo no permitido. Use JPG, PNG o GIF', 'error');
+                return;
+            }
+            
+            // Validar tamaño (5MB máximo)
+            if (file.size > 5 * 1024 * 1024) {
+                showAlert('❌ El archivo es muy grande. Máximo 5MB', 'error');
+                return;
+            }
+            
+            // Mostrar vista previa
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const photoElement = document.getElementById('profile-photo');
+                photoElement.innerHTML = `<img src="${e.target.result}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;"><input type="file" id="photo-input" accept="image/*" onchange="uploadPhoto()">`;
+                showAlert('📸 Foto cargada. Guarda el perfil para confirmar los cambios', 'warning');
+            };
+            reader.readAsDataURL(file);
+        }
+    </script>
+</body>
+</html>

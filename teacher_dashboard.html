@@ -1,0 +1,1888 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyMate - Panel Docente</title>
+    <link rel="stylesheet" href="dashboard_shared.css">
+    <style>
+        /* Page-specific styles that override shared styles */
+        .header { background: #27ae60; }
+        .nav { background: #2ecc71; }
+        .nav-tab.active { background: #229954; }
+        .section { display: none; }
+        .section.active { display: block !important; }
+        .stat-number { color: #27ae60; font-size: 1.2rem; }
+        .stat-label { font-size: 0.9rem; }
+        .form-group input, .form-group select, .form-group textarea { font-size: 0.95rem; }
+        .table { font-size: 0.8rem; min-width: 520px; }
+        .table th, .table td { padding: 0.4rem; font-size: 0.75rem; }
+        .btn { display: inline-block; margin-bottom: 0.25rem; }
+
+        /* Ocultar columnas no esenciales en móvil */
+        @media (max-width: 768px) {
+            /* Clases: ocultar Horario (4) y Aula (5) */
+            #classes-section table thead th:nth-child(4),
+            #classes-section table thead th:nth-child(5),
+            #classes-section table tbody td:nth-child(4),
+            #classes-section table tbody td:nth-child(5) { display: none; }
+
+            /* Revisiones: ocultar ID (1) en ambas tablas */
+            #reviews-section table thead th:nth-child(1),
+            #reviews-section table tbody td:nth-child(1) { display: none; }
+
+            /* Students: ocultar Grado (3), Asistencia (5), Última Calificación (6) */
+            #students-section table thead th:nth-child(3),
+            #students-section table thead th:nth-child(5),
+            #students-section table thead th:nth-child(6),
+            #students-section table tbody td:nth-child(3),
+            #students-section table tbody td:nth-child(5),
+            #students-section table tbody td:nth-child(6) { display: none; }
+
+            /* Grades: ocultar Observaciones (4) y Estado (5) */
+            #grades-section table thead th:nth-child(4),
+            #grades-section table thead th:nth-child(5),
+            #grades-section table tbody td:nth-child(4),
+            #grades-section table tbody td:nth-child(5) { display: none; }
+
+            /* History table: ocultar Evaluación (2) y Observaciones (5) */
+            #grade-history table thead th:nth-child(2),
+            #grade-history table thead th:nth-child(5),
+            #grade-history table tbody td:nth-child(2),
+            #grade-history table tbody td:nth-child(5) { display: none; }
+
+            /* Attendance main table: ocultar # (1) y Observaciones (4) */
+            #attendance-section table thead th:nth-child(1),
+            #attendance-section table thead th:nth-child(4),
+            #attendance-section table tbody td:nth-child(1),
+            #attendance-section table tbody td:nth-child(4) { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📚 StudyMate - Panel Docente</h1>
+        <div>
+            <span id="user-info">Cargando...</span>
+            <button class="btn" onclick="openCommunication()">💬 Comunicación</button>
+            <button class="btn" onclick="goToProfile()">👤 Mi Perfil</button>
+            <button class="btn btn-warning" onclick="openOtpModal()">🔒 2FA</button>
+            <button class="btn" onclick="logout()">Cerrar Sesión</button>
+        </div>
+
+        <!-- Reviews Section -->
+        <div id="reviews-section" class="section">
+            <h2>🔎 Revisiones</h2>
+            <div class="subsection">
+                <h3>Entregas de Recuperaciones</h3>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Recuperación</th>
+                                <th>Estudiante</th>
+                                <th>Fecha Entrega</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recovery-submissions-table">
+                            <tr><td colspan="5">Cargando entregas...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="subsection">
+                <h3>Envíos de Exámenes</h3>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Examen</th>
+                                <th>Estudiante</th>
+                                <th>Puntaje</th>
+                                <th>Fecha</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="exam-submissions-admin-table">
+                            <tr><td colspan="6">Cargando envíos...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="nav">
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showSection('dashboard')">📊 Dashboard</button>
+            <button class="nav-tab" onclick="showSection('classes')">📚 Mis Clases</button>
+            <button class="nav-tab" onclick="showSection('grades')">📝 Calificaciones</button>
+            <button class="nav-tab" onclick="showSection('students')">👥 Estudiantes</button>
+            <button class="nav-tab" onclick="showSection('attendance')">📅 Asistencia</button>
+            <button class="nav-tab" onclick="showSection('quizzes')">🧠 Quizzes</button>
+            <button class="nav-tab" onclick="showSection('assignments')">📝 Tareas</button>
+            <button class="nav-tab" onclick="showSection('reports')">📈 Reportes</button>
+            <button class="nav-tab" onclick="showSection('reviews')">🔎 Revisiones</button>
+        </div>
+        <div style="margin-top:0.5rem;">
+            <button class="nav-tab" onclick="toggleShowAll()" title="Mostrar/Ocultar todas las columnas">📐 Columnas</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="alerts" aria-live="polite"></div>
+
+        <!-- Dashboard Section -->
+        <div id="dashboard-section" class="section active">
+            <h2>📊 Mi Dashboard Docente</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="my-classes">0</div>
+                    <div class="stat-label">Mis Clases</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="my-students">0</div>
+                    <div class="stat-label">Mis Estudiantes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="pending-grades">0</div>
+                    <div class="stat-label">Calificaciones Pendientes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="avg-performance">0%</div>
+                    <div class="stat-label">Rendimiento Promedio</div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>🎯 Acciones Rápidas</h3>
+                <button class="btn" onclick="showSection('grades')">📝 Ingresar Calificaciones</button>
+                <button class="btn btn-primary" onclick="showSection('students')">👥 Ver Mis Estudiantes</button>
+                <button class="btn btn-warning" onclick="generateReport()">📈 Generar Reporte</button>
+            </div>
+
+            <div class="subsection">
+                <h3>📅 Mis Clases de Hoy</h3>
+                <div id="today-classes">
+                    <div class="class-card">
+                        <h4>Matemáticas - Grado 10A</h4>
+                        <p>⏰ 8:00 AM - 9:00 AM | 📍 Aula 201 | 👥 25 estudiantes</p>
+                    </div>
+                    <div class="class-card">
+                        <h4>Álgebra - Grado 11B</h4>
+                        <p>⏰ 10:00 AM - 11:00 AM | 📍 Aula 203 | 👥 22 estudiantes</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Classes Section -->
+        <div id="classes-section" class="section">
+            <h2>📚 Mis Clases</h2>
+            
+            <div class="subsection">
+                <h3>Materias Asignadas</h3>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Materia</th>
+                                <th>Grado</th>
+                                <th>Estudiantes</th>
+                                <th>Horario</th>
+                                <th>Aula</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="classes-table">
+                            <tr>
+                                <td>Matemáticas</td>
+                                <td>10A</td>
+                                <td>25</td>
+                                <td>Lun-Mie-Vie 8:00-9:00</td>
+                                <td>201</td>
+                                <td>
+                                    <button class="btn" onclick="viewClassDetails(1)">👁️ Ver</button>
+                                    <button class="btn btn-primary" onclick="gradeClass(1)">📝 Calificar</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Álgebra</td>
+                                <td>11B</td>
+                                <td>22</td>
+                                <td>Mar-Jue 10:00-11:00</td>
+                                <td>203</td>
+                                <td>
+                                    <button class="btn" onclick="viewClassDetails(2)">👁️ Ver</button>
+                                    <button class="btn btn-primary" onclick="gradeClass(2)">📝 Calificar</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grades Section -->
+        <div id="grades-section" class="section">
+            <h2>📝 Gestión de Calificaciones</h2>
+            
+            <div class="subsection">
+                <h3>Seleccionar Clase para Calificar</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Materia</label>
+                        <select id="grade-subject">
+                            <option value="">Seleccionar materia</option>
+                            <option value="1">Matemáticas - 10A</option>
+                            <option value="2">Álgebra - 11B</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Período</label>
+                        <select id="grade-period">
+                            <option value="1">Primer Bimestre</option>
+                            <option value="2">Segundo Bimestre</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo de Evaluación</label>
+                        <select id="evaluation-type">
+                            <option value="quiz">Quiz</option>
+                            <option value="interactive_quiz">Quiz Interactivo</option>
+                            <option value="exam">Examen</option>
+                            <option value="homework">Tarea</option>
+                            <option value="project">Proyecto</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn" onclick="loadStudentsForGrading()">📋 Cargar Estudiantes</button>
+                <button class="btn btn-success" onclick="createInteractiveQuiz()">🧠 Crear Quiz Interactivo</button>
+            </div>
+
+            <div class="subsection">
+                <h3>Calificar Estudiantes</h3>
+                <div class="alert alert-info">
+                    <strong>📝 Recordatorio:</strong> Las calificaciones se convierten automáticamente: 9.0-10.0 = Superior, 7.0-8.9 = Alto, 6.0-6.9 = Básico, 0-5.9 = Bajo
+                </div>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Estudiante</th>
+                                <th>Calificación (0-10)</th>
+                                <th>Cualitativa</th>
+                                <th>Observaciones</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="grading-table">
+                            <tr>
+                                <td><strong>Ana García</strong></td>
+                                <td><input type="number" class="grade-input" min="0" max="10" step="0.1" placeholder="0.0" onchange="updateQualitativeGrade(this)"></td>
+                                <td><span class="qualitative-grade">-</span></td>
+                                <td><input type="text" placeholder="Observaciones opcionales" class="grade-notes"></td>
+                                <td><span class="grade-status">Pendiente</span></td>
+                                <td><button class="btn" onclick="saveIndividualGrade(1)">💾 Guardar</button></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Carlos López</strong></td>
+                                <td><input type="number" class="grade-input" min="0" max="10" step="0.1" placeholder="0.0" onchange="updateQualitativeGrade(this)"></td>
+                                <td><span class="qualitative-grade">-</span></td>
+                                <td><input type="text" placeholder="Observaciones opcionales" class="grade-notes"></td>
+                                <td><span class="grade-status">Pendiente</span></td>
+                                <td><button class="btn" onclick="saveIndividualGrade(2)">💾 Guardar</button></td>
+                            </tr>
+                            <tr>
+                                <td><strong>María Rodríguez</strong></td>
+                                <td><input type="number" class="grade-input" min="0" max="10" step="0.1" placeholder="0.0" onchange="updateQualitativeGrade(this)"></td>
+                                <td><span class="qualitative-grade">-</span></td>
+                                <td><input type="text" placeholder="Observaciones opcionales" class="grade-notes"></td>
+                                <td><span class="grade-status">Pendiente</span></td>
+                                <td><button class="btn" onclick="saveIndividualGrade(3)">💾 Guardar</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="margin-top: 1rem;">
+                    <button class="btn btn-success" onclick="saveAllGrades()">💾 Guardar Todas las Calificaciones</button>
+                    <button class="btn btn-warning" onclick="previewGrades()">👁️ Vista Previa</button>
+                    <button class="btn" onclick="clearAllGrades()">🗑️ Limpiar Todo</button>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>📈 Historial de Calificaciones</h3>
+                <div class="form-group">
+                    <label>Ver Historial de:</label>
+                    <select id="history-student">
+                        <option value="">Seleccionar estudiante</option>
+                        <option value="1">Ana García</option>
+                        <option value="2">Carlos López</option>
+                        <option value="3">María Rodríguez</option>
+                    </select>
+                    <button class="btn" onclick="loadGradeHistory()">📈 Ver Historial</button>
+                </div>
+                <div id="grade-history" style="display: none;">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Evaluación</th>
+                                    <th>Calificación</th>
+                                    <th>Cualitativa</th>
+                                    <th>Observaciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-table">
+                                <tr>
+                                    <td>10/12/2024</td>
+                                    <td>Examen Final</td>
+                                    <td>9.0</td>
+                                    <td>Superior</td>
+                                    <td>Excelente dominio del tema</td>
+                                </tr>
+                                <tr>
+                                    <td>05/12/2024</td>
+                                    <td>Quiz</td>
+                                    <td>8.5</td>
+                                    <td>Alto</td>
+                                    <td>Muy buen desempeño</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Students Section -->
+        <div id="students-section" class="section">
+            <h2>👥 Mis Estudiantes</h2>
+            
+            <div class="subsection">
+                <h3>Filtros y Acciones</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Filtrar por Materia</label>
+                        <select id="student-filter" onchange="loadStudentsBySubject()">
+                            <option value="">Todas las materias</option>
+                            <option value="1">Matemáticas - 10A</option>
+                            <option value="2">Álgebra - 11B</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Acción Rápida</label>
+                        <select id="quick-action">
+                            <option value="">Seleccionar acción</option>
+                            <option value="grade_all">Calificar Todos</option>
+                            <option value="attendance_today">Tomar Asistencia Hoy</option>
+                            <option value="send_message">Enviar Mensaje Grupal</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn" onclick="executeQuickAction()">⚡ Ejecutar Acción</button>
+                <button class="btn btn-success" onclick="exportStudentList()">📄 Exportar Lista</button>
+            </div>
+            
+            <div class="subsection">
+                <h3>Lista de Estudiantes</h3>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="select-all" onchange="toggleSelectAll()"></th>
+                                <th>Estudiante</th>
+                                <th>Grado</th>
+                                <th>Promedio</th>
+                                <th>Asistencia</th>
+                                <th>Última Calificación</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="students-table">
+                            <tr class="student-row">
+                                <td><input type="checkbox" class="student-checkbox" value="1"></td>
+                                <td><strong>Ana García</strong><br><small>ana.garcia@estudiante.com</small></td>
+                                <td>10A</td>
+                                <td><span class="grade-excellent">8.5</span></td>
+                                <td><span style="color: #27ae60;">95%</span></td>
+                                <td>9.0 (Examen - 10/12)</td>
+                                <td><span style="color: #27ae60;">✅ Activo</span></td>
+                                <td>
+                                    <button class="btn" onclick="openStudentModal(1)">📋 Gestionar</button>
+                                    <button class="btn btn-primary" onclick="quickGrade(1)">📝 Calificar</button>
+                                </td>
+                            </tr>
+                            <tr class="student-row">
+                                <td><input type="checkbox" class="student-checkbox" value="2"></td>
+                                <td><strong>Carlos López</strong><br><small>carlos.lopez@estudiante.com</small></td>
+                                <td>10A</td>
+                                <td><span class="grade-good">6.8</span></td>
+                                <td><span style="color: #f39c12;">88%</span></td>
+                                <td>7.2 (Quiz - 08/12)</td>
+                                <td><span style="color: #f39c12;">⚠️ En Riesgo</span></td>
+                                <td>
+                                    <button class="btn" onclick="openStudentModal(2)">📋 Gestionar</button>
+                                    <button class="btn btn-warning" onclick="quickGrade(2)">📝 Calificar</button>
+                                </td>
+                            </tr>
+                            <tr class="student-row">
+                                <td><input type="checkbox" class="student-checkbox" value="3"></td>
+                                <td><strong>María Rodríguez</strong><br><small>maria.rodriguez@estudiante.com</small></td>
+                                <td>10A</td>
+                                <td><span class="grade-excellent">9.2</span></td>
+                                <td><span style="color: #27ae60;">98%</span></td>
+                                <td>9.5 (Proyecto - 12/12)</td>
+                                <td><span style="color: #27ae60;">✅ Excelente</span></td>
+                                <td>
+                                    <button class="btn" onclick="openStudentModal(3)">📋 Gestionar</button>
+                                    <button class="btn btn-success" onclick="quickGrade(3)">📝 Calificar</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>📈 Estadísticas de la Clase</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number">7.8</div>
+                        <div class="stat-label">Promedio de Clase</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">92%</div>
+                        <div class="stat-label">Asistencia Promedio</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">1</div>
+                        <div class="stat-label">Estudiantes en Riesgo</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">85%</div>
+                        <div class="stat-label">Tasa de Aprobación</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attendance Section -->
+        <div id="attendance-section" class="section">
+            <h2>📅 Control de Asistencia</h2>
+            
+            <div class="subsection">
+                <h3>Tomar Asistencia</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Materia</label>
+                        <select id="attendance-subject">
+                            <option value="1">Matemáticas - 10A</option>
+                            <option value="2">Álgebra - 11B</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha</label>
+                        <input type="date" id="attendance-date" value="2024-12-12">
+                    </div>
+                    <div class="form-group">
+                        <label>Hora de Clase</label>
+                        <select id="attendance-period">
+                            <option value="1">1ª Hora (8:00-9:00)</option>
+                            <option value="2">2ª Hora (9:00-10:00)</option>
+                            <option value="3">3ª Hora (10:00-11:00)</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn" onclick="loadAttendanceList()">📋 Cargar Lista</button>
+                <button class="btn btn-success" onclick="markAllPresent()">✅ Marcar Todos Presentes</button>
+            </div>
+
+            <div class="subsection">
+                <h3>Lista de Asistencia - Matemáticas 10A</h3>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Estudiante</th>
+                                <th>Estado</th>
+                                <th>Observaciones</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendance-table">
+                            <tr>
+                                <td>1</td>
+                                <td><strong>Ana García</strong></td>
+                                <td>
+                                    <select class="attendance-status" data-student="1">
+                                        <option value="present" selected>Presente</option>
+                                        <option value="absent">Ausente</option>
+                                        <option value="late">Tardía</option>
+                                        <option value="excused">Excusa</option>
+                                    </select>
+                                </td>
+                                <td><input type="text" placeholder="Observaciones opcionales" class="attendance-notes"></td>
+                                <td><button class="btn" onclick="saveAttendanceRecord(1)">💾 Guardar</button></td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td><strong>Carlos López</strong></td>
+                                <td>
+                                    <select class="attendance-status" data-student="2">
+                                        <option value="present">Presente</option>
+                                        <option value="absent" selected>Ausente</option>
+                                        <option value="late">Tardía</option>
+                                        <option value="excused">Excusa</option>
+                                    </select>
+                                </td>
+                                <td><input type="text" placeholder="Observaciones opcionales" class="attendance-notes"></td>
+                                <td><button class="btn" onclick="saveAttendanceRecord(2)">💾 Guardar</button></td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td><strong>María Rodríguez</strong></td>
+                                <td>
+                                    <select class="attendance-status" data-student="3">
+                                        <option value="present" selected>Presente</option>
+                                        <option value="absent">Ausente</option>
+                                        <option value="late">Tardía</option>
+                                        <option value="excused">Excusa</option>
+                                    </select>
+                                </td>
+                                <td><input type="text" placeholder="Observaciones opcionales" class="attendance-notes"></td>
+                                <td><button class="btn" onclick="saveAttendanceRecord(3)">💾 Guardar</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <button class="btn btn-success" onclick="saveAllAttendance()">💾 Guardar Toda la Asistencia</button>
+                <button class="btn btn-primary" onclick="generateAttendanceReport()">📈 Generar Reporte</button>
+            </div>
+
+            <div class="subsection">
+                <h3>📈 Reporte de Asistencia</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Período</label>
+                        <select id="attendance-report-period">
+                            <option value="week">Esta Semana</option>
+                            <option value="month">Este Mes</option>
+                            <option value="semester">Este Semestre</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn" onclick="generateAttendanceReport()">📈 Ver Reporte</button>
+                <button class="btn btn-warning" onclick="exportAttendance()">📄 Exportar Excel</button>
+            </div>
+        </div>
+
+        <!-- Quizzes Section -->
+        <div id="quizzes-section" class="section">
+            <h2>🧠 Creador de Quizzes</h2>
+            
+            <div class="subsection">
+                <h3>➕ Crear Nuevo Quiz</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Título del Quiz</label>
+                        <input type="text" id="quiz-title" placeholder="Ej: Quiz de Matemáticas - Capítulo 5">
+                    </div>
+                    <div class="form-group">
+                        <label>Materia</label>
+                        <select id="quiz-subject">
+                            <option value="1">Matemáticas - 10A</option>
+                            <option value="2">Álgebra - 11B</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tiempo Límite (minutos)</label>
+                        <input type="number" id="quiz-time" min="5" max="120" value="30">
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha Límite</label>
+                        <input type="datetime-local" id="quiz-deadline">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Instrucciones</label>
+                    <textarea id="quiz-instructions" rows="3" placeholder="Instrucciones para los estudiantes..."></textarea>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>📝 Preguntas del Quiz</h3>
+                <div id="questions-container">
+                    <!-- Las preguntas se agregarán dinámicamente -->
+                </div>
+                <div style="margin-top: 1rem;">
+                    <button class="btn btn-success" onclick="addQuestion('multiple')">➕ Pregunta Opción Múltiple</button>
+                    <button class="btn btn-primary" onclick="addQuestion('single')">➕ Pregunta Única Respuesta</button>
+                    <button class="btn btn-warning" onclick="addQuestion('open')">➕ Pregunta Abierta</button>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>💾 Guardar Quiz</h3>
+                <button class="btn" onclick="previewQuiz()">👁️ Vista Previa</button>
+                <button class="btn btn-success" onclick="saveQuiz()">💾 Guardar Quiz</button>
+                <button class="btn btn-success" onclick="saveExam()">💾 Guardar como Examen</button>
+                <button class="btn btn-primary" onclick="publishQuiz()">🚀 Publicar para Estudiantes</button>
+            </div>
+
+            <div class="subsection">
+                <h3>📋 Mis Quizzes</h3>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Título</th>
+                                <th>Materia</th>
+                                <th>Preguntas</th>
+                                <th>Estado</th>
+                                <th>Respuestas</th>
+                                <th>Fecha Límite</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Quiz Ecuaciones</strong></td>
+                                <td>Matemáticas 10A</td>
+                                <td>10</td>
+                                <td><span style="color: #27ae60;">✅ Publicado</span></td>
+                                <td>15/25</td>
+                                <td>15/12/2024 23:59</td>
+                                <td>
+                                    <button class="btn" onclick="viewQuizResults(1)">📈 Resultados</button>
+                                    <button class="btn btn-warning" onclick="editQuiz(1)">✏️ Editar</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Quiz Álgebra Básica</strong></td>
+                                <td>Álgebra 11B</td>
+                                <td>8</td>
+                                <td><span style="color: #f39c12;">📄 Borrador</span></td>
+                                <td>0/22</td>
+                                <td>-</td>
+                                <td>
+                                    <button class="btn btn-primary" onclick="publishQuiz(2)">🚀 Publicar</button>
+                                    <button class="btn btn-warning" onclick="editQuiz(2)">✏️ Editar</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assignments Section -->
+        <div id="assignments-section" class="section">
+            <h2>📝 Gestión de Tareas</h2>
+            
+            <div class="subsection">
+                <h3>➕ Crear Nueva Tarea</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Título de la Tarea</label>
+                        <input type="text" id="assignment-title" placeholder="Ej: Ejercicios de Derivadas">
+                    </div>
+                    <div class="form-group">
+                        <label>Materia</label>
+                        <select id="assignment-subject">
+                            <option value="1">Matemáticas - 10A</option>
+                            <option value="2">Álgebra - 11B</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo de Tarea</label>
+                        <select id="assignment-type">
+                            <option value="homework">Tarea para Casa</option>
+                            <option value="project">Proyecto</option>
+                            <option value="research">Investigación</option>
+                            <option value="practice">Práctica</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha de Entrega</label>
+                        <input type="datetime-local" id="assignment-due">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Descripción de la Tarea</label>
+                    <textarea id="assignment-description" rows="4" placeholder="Describe detalladamente qué deben hacer los estudiantes..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Recursos/Archivos</label>
+                    <input type="file" id="assignment-files" multiple accept=".pdf,.doc,.docx,.jpg,.png">
+                    <small>Puedes subir archivos de apoyo (PDF, Word, imágenes)</small>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Puntuación Máxima</label>
+                        <input type="number" id="assignment-points" min="1" max="100" value="10">
+                    </div>
+                    <div class="form-group">
+                        <label>Permitir Entrega Tardía</label>
+                        <select id="assignment-late">
+                            <option value="no">No</option>
+                            <option value="yes">Sí (con penalización)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Grupo de Estudiantes</label>
+                    <div id="group-selection" class="form-check-group">
+                        <div class="form-check">
+                            <input type="radio" id="group-all" name="assignment-group" value="all" checked>
+                            <label for="group-all">Todos los estudiantes de la materia</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="radio" id="group-specific" name="assignment-group" value="specific">
+                            <label for="group-specific">Grupo específico</label>
+                        </div>
+                    </div>
+                    <div id="group-selector" style="display: none; margin-top: 10px;">
+                        <select id="assignment-group" class="form-control">
+                            <option value="">Seleccionar grupo</option>
+                            <option value="10A">Grado 10A</option>
+                            <option value="10B">Grado 10B</option>
+                            <option value="11A">Grado 11A</option>
+                            <option value="11B">Grado 11B</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn btn-success" onclick="createAssignment()">📝 Crear Tarea</button>
+            </div>
+
+            <div class="subsection">
+                <h3>📋 Tareas Asignadas</h3>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Título</th>
+                                <th>Materia</th>
+                                <th>Tipo</th>
+                                <th>Fecha Entrega</th>
+                                <th>Entregadas</th>
+                                <th>Por Calificar</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Ejercicios Capítulo 3</strong></td>
+                                <td>Matemáticas 10A</td>
+                                <td>Tarea</td>
+                                <td>20/12/2024</td>
+                                <td>18/25</td>
+                                <td>5</td>
+                                <td>
+                                    <button class="btn" onclick="viewSubmissions(1)">📄 Ver Entregas</button>
+                                    <button class="btn btn-primary" onclick="gradeAssignments(1)">📝 Calificar</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Proyecto Final</strong></td>
+                                <td>Álgebra 11B</td>
+                                <td>Proyecto</td>
+                                <td>25/12/2024</td>
+                                <td>12/22</td>
+                                <td>12</td>
+                                <td>
+                                    <button class="btn" onclick="viewSubmissions(2)">📄 Ver Entregas</button>
+                                    <button class="btn btn-warning" onclick="sendReminder(2)">🔔 Recordatorio</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>📈 Estadísticas de Tareas</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number">5</div>
+                        <div class="stat-label">Tareas Activas</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">23</div>
+                        <div class="stat-label">Por Calificar</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">85%</div>
+                        <div class="stat-label">Tasa de Entrega</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">8.2</div>
+                        <div class="stat-label">Promedio General</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports Section -->
+        <div id="reports-section" class="section">
+            <h2>📈 Reportes Académicos</h2>
+            
+            <div class="subsection">
+                <h3>Generar Reportes</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Tipo de Reporte</label>
+                        <select id="report-type">
+                            <option value="class_performance">Rendimiento por Clase</option>
+                            <option value="student_progress">Progreso Individual</option>
+                            <option value="grade_distribution">Distribución de Calificaciones</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Período</label>
+                        <select id="report-period">
+                            <option value="current">Período Actual</option>
+                            <option value="previous">Período Anterior</option>
+                            <option value="year">Todo el Año</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn" onclick="generateReport()">📊 Generar Reporte</button>
+                <button class="btn btn-primary" onclick="exportReport()">📥 Exportar PDF</button>
+            </div>
+
+            <div class="subsection">
+                <h3>Estadísticas Rápidas</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number">8.2</div>
+                        <div class="stat-label">Promedio General</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">85%</div>
+                        <div class="stat-label">Estudiantes Aprobados</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">3</div>
+                        <div class="stat-label">Estudiantes en Riesgo</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">92%</div>
+                        <div class="stat-label">Asistencia Promedio</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="notifications.js"></script>
+    <script src="communication.js"></script>
+    <script>
+        let currentUser = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            loadDashboard();
+            loadRealStats();
+        });
+
+        function checkAuth() {
+            const user = JSON.parse(localStorage.getItem('studymate_user') || '{}');
+            if (!user.id || (user.role !== 'teacher' && user.role !== 'super_admin')) {
+                alert('Acceso denegado. Solo docentes y super administradores pueden acceder.');
+                window.location.href = '/';
+                return;
+            }
+            currentUser = user;
+            const roleText = user.role === 'super_admin' ? 'Super Admin' : 'Docente';
+            document.getElementById('user-info').textContent = `${user.name} (${roleText})`;
+        }
+
+        function showSection(section, ev) {
+            document.querySelectorAll('[id$="-section"]').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+
+            const targetSection = document.getElementById(section + '-section');
+            if (targetSection) targetSection.classList.add('active');
+
+            const target = ev && ev.currentTarget ? ev.currentTarget : (ev && ev.target ? ev.target : null);
+            if (target && target.classList) {
+                target.classList.add('active');
+            } else {
+                const btns = Array.from(document.querySelectorAll('.nav-tab'));
+                const btn = btns.find(b => (b.getAttribute('onclick') || '').includes(`showSection('${section}'`));
+                if (btn) btn.classList.add('active');
+            }
+
+            if (section === 'reviews') { if (typeof loadReviewData === 'function') loadReviewData(); }
+        }
+
+        // ==== Stubs seguros para acciones invocadas desde la UI (evitan errores en demo) ====
+        function openCommunication(){ showAlert('Comunicación disponible próximamente', 'info'); }
+        function generateReport(){ showAlert('Generando reporte (demo)', 'success'); }
+        function viewClassDetails(id){ showAlert('Detalle de clase #' + id + ' (demo)', 'info'); }
+        function gradeClass(id){ showAlert('Ir a calificar clase #' + id + ' (demo)', 'info'); }
+        function openStudentModal(id){ showAlert('Gestionar estudiante #' + id + ' (demo)', 'info'); }
+        function quickGrade(id){ showAlert('Calificación rápida para estudiante #' + id + ' (demo)', 'info'); }
+        function toggleSelectAll(){
+            const all = document.getElementById('select-all');
+            const boxes = document.querySelectorAll('.student-checkbox');
+            boxes.forEach(cb => cb.checked = !!(all && all.checked));
+        }
+        function executeQuickAction(){ showAlert('Acción rápida ejecutada (demo)', 'success'); }
+        function exportStudentList(){ showAlert('Exportando lista (demo)', 'success'); }
+        function loadReviewData(){ /* placeholder para evitar errores si no hay datos */ }
+
+        function loadDashboard() {
+            document.getElementById('my-classes').textContent = '2';
+            document.getElementById('my-students').textContent = '47';
+            document.getElementById('pending-grades').textContent = '5';
+            document.getElementById('avg-performance').textContent = '82%';
+        }
+
+        async function loadRealStats() {
+            // Mantener valores por defecto para evitar errores
+            document.getElementById('my-classes').textContent = '2';
+            document.getElementById('my-students').textContent = '47';
+            document.getElementById('pending-grades').textContent = '5';
+            document.getElementById('avg-performance').textContent = '82%';
+
+            try {
+                const response = await fetch(`dashboard_api.php?action=teacher_stats&user_id=${currentUser.id}`);
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    document.getElementById('my-classes').textContent = data.my_classes || 2;
+                    document.getElementById('my-students').textContent = data.my_students || 47;
+                    document.getElementById('pending-grades').textContent = data.pending_grades || 5;
+                    document.getElementById('avg-performance').textContent = (data.avg_performance || 82) + '%';
+                }
+                // Si hay error, mantener valores por defecto sin mostrar mensaje
+            } catch (error) {
+                // Mantener valores por defecto sin mostrar error
+                console.log('Dashboard loaded with default values');
+            }
+        }
+
+        function loadStudentsForGrading() {
+            const subject = document.getElementById('grade-subject').value;
+            if (!subject) {
+                showAlert('Seleccione una materia', 'error');
+                return;
+            }
+
+            const tbody = document.getElementById('grading-table');
+            tbody.innerHTML = `
+                <tr>
+                    <td>Ana García</td>
+                    <td><input type="number" class="grade-input" min="0" max="10" step="0.1" placeholder="0.0"></td>
+                    <td><input type="text" placeholder="Observaciones opcionales"></td>
+                    <td><span style="color: #f39c12;">Pendiente</span></td>
+                </tr>
+                <tr>
+                    <td>Carlos López</td>
+                    <td><input type="number" class="grade-input" min="0" max="10" step="0.1" placeholder="0.0"></td>
+                    <td><input type="text" placeholder="Observaciones opcionales"></td>
+                    <td><span style="color: #f39c12;">Pendiente</span></td>
+                </tr>
+            `;
+        }
+
+        function updateQualitativeGrade(input) {
+            const grade = parseFloat(input.value);
+            const qualitativeSpan = input.closest('tr').querySelector('.qualitative-grade');
+            const statusSpan = input.closest('tr').querySelector('.grade-status');
+            
+            if (isNaN(grade)) {
+                qualitativeSpan.textContent = '-';
+                statusSpan.textContent = 'Pendiente';
+                statusSpan.style.color = '#f39c12';
+                return;
+            }
+            
+            let qualitative, color;
+            if (grade >= 9.0) {
+                qualitative = 'Superior';
+                color = '#27ae60';
+            } else if (grade >= 7.0) {
+                qualitative = 'Alto';
+                color = '#3498db';
+            } else if (grade >= 6.0) {
+                qualitative = 'Básico';
+                color = '#f39c12';
+            } else {
+                qualitative = 'Bajo';
+                color = '#e74c3c';
+            }
+            
+            qualitativeSpan.textContent = qualitative;
+            qualitativeSpan.style.color = color;
+            statusSpan.textContent = 'Listo';
+            statusSpan.style.color = '#27ae60';
+        }
+
+        async function saveIndividualGrade(studentId) {
+            if (!ensureOtpOrPrompt()) return;
+            const subjectId = document.getElementById('grade-subject').value;
+            const periodId = document.getElementById('grade-period').value;
+            const evaluationType = document.getElementById('evaluation-type').value;
+
+            if (!subjectId || !periodId) {
+                showAlert('Seleccione materia y período', 'warning');
+                return;
+            }
+
+            // Encontrar la fila del estudiante
+            const rows = document.querySelectorAll('#grading-table tr');
+            const studentRow = rows[studentId - 1]; // Ajustar índice
+            const gradeInput = studentRow.querySelector('.grade-input');
+            const notesInput = studentRow.querySelector('.grade-notes');
+
+            const numericGrade = parseFloat(gradeInput.value);
+
+            if (isNaN(numericGrade) || numericGrade < 0 || numericGrade > 10) {
+                showAlert('Ingrese una calificación válida (0-10)', 'warning');
+                return;
+            }
+
+            try {
+                const response = await fetch('teacher_grades_api.php?action=save_grades', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: currentUser.id,
+                        subject_id: subjectId,
+                        period_id: periodId,
+                        evaluation_type: evaluationType,
+                        grades: [{
+                            student_id: studentId,
+                            numeric_grade: numericGrade,
+                            observations: notesInput.value || ''
+                        }]
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAlert(`✅ Calificación guardada para estudiante ${studentId}`, 'success');
+                    // Actualizar estado visual
+                    const statusSpan = studentRow.querySelector('.grade-status');
+                    statusSpan.textContent = 'Guardado';
+                    statusSpan.style.color = '#27ae60';
+                } else {
+                    showAlert('Error: ' + (data.message || 'Error desconocido'), 'error');
+                }
+            } catch (error) {
+                showAlert('Error de conexión', 'error');
+            }
+        }
+
+        async function saveAllGrades() {
+            if (!ensureOtpOrPrompt()) return;
+            const subjectId = document.getElementById('grade-subject').value;
+            const periodId = document.getElementById('grade-period').value;
+            const evaluationType = document.getElementById('evaluation-type').value;
+
+            if (!subjectId || !periodId) {
+                showAlert('Seleccione materia y período', 'warning');
+                return;
+            }
+
+            const grades = [];
+            const gradeInputs = document.querySelectorAll('.grade-input');
+            const noteInputs = document.querySelectorAll('.grade-notes');
+
+            gradeInputs.forEach((input, index) => {
+                const numericGrade = parseFloat(input.value);
+                if (!isNaN(numericGrade) && numericGrade >= 0 && numericGrade <= 10) {
+                    grades.push({
+                        student_id: index + 1, // Simplificado para demo
+                        numeric_grade: numericGrade,
+                        observations: noteInputs[index].value || ''
+                    });
+                }
+            });
+
+            if (grades.length === 0) {
+                showAlert('No hay calificaciones válidas para guardar', 'warning');
+                return;
+            }
+
+            try {
+                const response = await fetch('teacher_grades_api.php?action=save_grades', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: currentUser.id,
+                        subject_id: subjectId,
+                        period_id: periodId,
+                        evaluation_type: evaluationType,
+                        grades: grades
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAlert(`✅ ${data.saved_count || grades.length} calificaciones guardadas exitosamente`, 'success');
+                    // Actualizar estados visuales
+                    document.querySelectorAll('.grade-status').forEach(span => {
+                        span.textContent = 'Guardado';
+                        span.style.color = '#27ae60';
+                    });
+                } else {
+                    showAlert('Error: ' + (data.message || 'Error desconocido'), 'error');
+                }
+            } catch (error) {
+                showAlert('Error de conexión', 'error');
+            }
+        }
+
+        async function previewGrades() {
+            const grades = [];
+            const gradeInputs = document.querySelectorAll('.grade-input');
+            const noteInputs = document.querySelectorAll('.grade-notes');
+            
+            gradeInputs.forEach((input, index) => {
+                const numericGrade = parseFloat(input.value);
+                if (!isNaN(numericGrade)) {
+                    grades.push({
+                        student_id: index + 1,
+                        numeric_grade: numericGrade,
+                        observations: noteInputs[index].value || ''
+                    });
+                }
+            });
+            
+            if (grades.length === 0) {
+                showAlert('No hay calificaciones para previsualizar', 'warning');
+                return;
+            }
+            
+            try {
+                const response = await fetch('teacher_grades_api.php?action=preview_grades', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ grades: grades })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showGradePreview(data.preview);
+                } else {
+                    showAlert('Error en vista previa: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showAlert('Error de conexión', 'error');
+            }
+        }
+        
+        function showGradePreview(preview) {
+            let previewHtml = '<div style="background: #f8f9fa; padding: 15px; border-radius: 6px; margin: 10px 0;"><h4>Vista Previa de Calificaciones:</h4>';
+            
+            preview.forEach((grade, index) => {
+                const studentNames = ['Ana García', 'Carlos López', 'María Rodríguez'];
+                previewHtml += `
+                    <div style="margin: 8px 0; padding: 8px; background: white; border-radius: 4px;">
+                        <strong>${studentNames[index] || 'Estudiante ' + (index + 1)}</strong>: 
+                        <span style="color: ${grade.color}; font-weight: bold;">${grade.numeric_grade} (${grade.qualitative_grade})</span>
+                        ${grade.observations ? ' - ' + grade.observations : ''}
+                    </div>
+                `;
+            });
+            
+            previewHtml += '</div>';
+            
+            // Crear modal de vista previa
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center;';
+            modal.innerHTML = `
+                <div style="background: white; padding: 20px; border-radius: 8px; max-width: 500px; width: 90%;">
+                    ${previewHtml}
+                    <div style="text-align: center; margin-top: 15px;">
+                        <button onclick="this.closest('div').parentElement.remove()" style="background: #3498db; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">Cerrar</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+
+        function clearAllGrades() {
+            if (confirm('¿Está seguro de limpiar todas las calificaciones?')) {
+                document.querySelectorAll('.grade-input').forEach(input => input.value = '');
+                document.querySelectorAll('.grade-notes').forEach(input => input.value = '');
+                document.querySelectorAll('.qualitative-grade').forEach(span => span.textContent = '-');
+                document.querySelectorAll('.grade-status').forEach(span => {
+                    span.textContent = 'Pendiente';
+                    span.style.color = '#f39c12';
+                });
+                showAlert('Calificaciones limpiadas', 'info');
+            }
+        }
+
+        function loadGradeHistory() {
+            const studentId = document.getElementById('history-student').value;
+            if (!studentId) {
+                showAlert('Seleccione un estudiante', 'warning');
+                return;
+            }
+            
+            document.getElementById('grade-history').style.display = 'block';
+            showAlert(`Cargando historial del estudiante ${studentId}`, 'info');
+        }
+
+        // FUNCIONES DE QUIZZES
+        let questionCount = 0;
+        
+        function addQuestion(type) {
+            questionCount++;
+            const container = document.getElementById('questions-container');
+            
+            let questionHtml = `
+                <div class="question-item" id="question-${questionCount}" style="border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 6px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h4>Pregunta ${questionCount} (${type === 'multiple' ? 'Opción Múltiple' : type === 'single' ? 'Única Respuesta' : 'Abierta'})</h4>
+                        <button class="btn btn-danger" onclick="removeQuestion(${questionCount})" style="padding: 5px 10px;">❌</button>
+                    </div>
+                    <div class="form-group">
+                        <label>Pregunta</label>
+                        <textarea class="question-text" rows="2" placeholder="Escribe tu pregunta aquí..."></textarea>
+                    </div>
+            `;
+            
+            if (type === 'multiple') {
+                questionHtml += `
+                    <div class="form-group">
+                        <label>Opciones de Respuesta</label>
+                        <div class="options-container">
+                            <div style="margin: 5px 0;">
+                                <input type="radio" name="correct-${questionCount}" value="0">
+                                <input type="text" placeholder="Opción A" style="width: 80%; margin-left: 10px;">
+                            </div>
+                            <div style="margin: 5px 0;">
+                                <input type="radio" name="correct-${questionCount}" value="1">
+                                <input type="text" placeholder="Opción B" style="width: 80%; margin-left: 10px;">
+                            </div>
+                            <div style="margin: 5px 0;">
+                                <input type="radio" name="correct-${questionCount}" value="2">
+                                <input type="text" placeholder="Opción C" style="width: 80%; margin-left: 10px;">
+                            </div>
+                            <div style="margin: 5px 0;">
+                                <input type="radio" name="correct-${questionCount}" value="3">
+                                <input type="text" placeholder="Opción D" style="width: 80%; margin-left: 10px;">
+                            </div>
+                        </div>
+                        <small>Selecciona la respuesta correcta</small>
+                    </div>
+                `;
+            } else if (type === 'single') {
+                questionHtml += `
+                    <div class="form-group">
+                        <label>Respuesta Correcta</label>
+                        <input type="text" class="correct-answer" placeholder="Respuesta correcta...">
+                    </div>
+                `;
+            } else {
+                questionHtml += `
+                    <div class="form-group">
+                        <label>Criterios de Evaluación</label>
+                        <textarea class="evaluation-criteria" rows="2" placeholder="Describe cómo evaluarás esta respuesta..."></textarea>
+                    </div>
+                `;
+            }
+            
+            questionHtml += `
+                    <div class="form-group">
+                        <label>Puntos</label>
+                        <input type="number" class="question-points" min="1" max="10" value="1">
+                    </div>
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('beforeend', questionHtml);
+        }
+        
+        function removeQuestion(questionId) {
+            document.getElementById(`question-${questionId}`).remove();
+        }
+        
+        function previewQuiz() {
+            const title = document.getElementById('quiz-title').value;
+            if (!title) {
+                showAlert('Ingrese un título para el quiz', 'warning');
+                return;
+            }
+            
+            const questions = document.querySelectorAll('.question-item');
+            if (questions.length === 0) {
+                showAlert('Agregue al menos una pregunta', 'warning');
+                return;
+            }
+            
+            showAlert('👁️ Mostrando vista previa del quiz...', 'info');
+        }
+        
+        function saveQuiz() {
+            if (!ensureOtpOrPrompt()) return;
+            const title = document.getElementById('quiz-title').value;
+            const subject = document.getElementById('quiz-subject').value;
+            
+            if (!title || !subject) {
+                showAlert('Complete título y materia', 'warning');
+                return;
+            }
+            
+            const questions = document.querySelectorAll('.question-item');
+            if (questions.length === 0) {
+                showAlert('Agregue al menos una pregunta', 'warning');
+                return;
+            }
+            
+            showAlert('💾 Quiz guardado como borrador', 'success');
+        }
+
+        function publishQuiz(quizId) {
+            if (!ensureOtpOrPrompt()) return;
+            if (quizId) {
+                showAlert(`🚀 Quiz ${quizId} publicado para estudiantes`, 'success');
+            } else {
+                showAlert('🚀 Quiz publicado para estudiantes', 'success');
+            }
+        }
+
+        async function saveExam() {
+            if (!ensureOtpOrPrompt()) return;
+            const title = document.getElementById('quiz-title').value;
+            const subjectId = document.getElementById('quiz-subject').value;
+            const timeLimit = parseInt(document.getElementById('quiz-time').value || '30', 10);
+            const deadline = document.getElementById('quiz-deadline').value; // datetime-local
+            const instructions = document.getElementById('quiz-instructions').value || '';
+
+            if (!currentUser || !currentUser.id) {
+                showAlert('Sesión inválida. Inicie sesión de nuevo.', 'error');
+                return;
+            }
+            if (!title || !subjectId) {
+                showAlert('Complete título y materia', 'warning');
+                return;
+            }
+
+            const qEls = document.querySelectorAll('.question-item');
+            if (qEls.length === 0) {
+                showAlert('Agregue al menos una pregunta', 'warning');
+                return;
+            }
+
+            const questions = [];
+            qEls.forEach(el => {
+                // Detect type from header text
+                const h4 = el.querySelector('h4')?.textContent || '';
+                let type = 'multiple';
+                if (h4.includes('Única Respuesta')) type = 'single';
+                else if (h4.includes('Abierta')) type = 'open';
+
+                const prompt = el.querySelector('.question-text')?.value || '';
+                const points = parseFloat(el.querySelector('.question-points')?.value || '1') || 1;
+
+                if (type === 'multiple') {
+                    const optionsNodes = el.querySelectorAll('.options-container > div input[type="text"]');
+                    const opts = Array.from(optionsNodes).map(inp => inp.value || '');
+                    const correctRadio = el.querySelector('input[type="radio"]:checked');
+                    const correctIndex = correctRadio ? parseInt(correctRadio.value, 10) : -1;
+                    const correct = correctIndex >= 0 ? [correctIndex] : [];
+                    questions.push({ type: 'multiple', prompt, options: opts, correct, points });
+                } else if (type === 'single') {
+                    const correctAns = el.querySelector('.correct-answer')?.value || '';
+                    questions.push({ type: 'single', prompt, options: [], correct: [correctAns], points });
+                } else {
+                    // open: sin opciones/correctas, evaluado por rúbrica
+                    questions.push({ type: 'open', prompt, options: [], correct: [], points });
+                }
+            });
+
+            try {
+                const resp = await fetch('/exams_api.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: currentUser.id,
+                        subject_id: parseInt(subjectId, 10),
+                        title,
+                        instructions,
+                        time_limit: timeLimit,
+                        deadline: deadline || null,
+                        questions
+                    })
+                });
+                const data = await resp.json();
+                if (resp.ok) {
+                    showAlert(`✅ Examen guardado (ID: ${data.exam_id || 'demo'}) con ${data.questions_saved || questions.length} preguntas`, 'success');
+                } else {
+                    showAlert('Error: ' + (data.message || 'No se pudo guardar el examen'), 'error');
+                }
+            } catch (e) {
+                showAlert('Error de conexión', 'error');
+            }
+        }
+        
+        function viewQuizResults(quizId) {
+            showAlert(`📈 Viendo resultados del quiz ${quizId}`, 'info');
+        }
+        
+        function editQuiz(quizId) {
+            showAlert(`✏️ Editando quiz ${quizId}`, 'info');
+        }
+        
+        // FUNCIONES DE TAREAS
+        // Mostrar/ocultar selector de grupo según la opción seleccionada
+        document.addEventListener('DOMContentLoaded', function() {
+            const groupSpecificRadio = document.getElementById('group-specific');
+            const groupSelector = document.getElementById('group-selector');
+            
+            document.querySelectorAll('input[name="assignment-group"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    groupSelector.style.display = this.value === 'specific' ? 'block' : 'none';
+                });
+            });
+        });
+
+        async function createAssignment() {
+            const title = document.getElementById('assignment-title').value;
+            const subjectId = document.getElementById('assignment-subject').value;
+            const description = document.getElementById('assignment-description').value;
+            const dueDate = document.getElementById('assignment-due').value;
+            const maxScore = document.getElementById('assignment-points').value;
+            const groupOption = document.querySelector('input[name="assignment-group"]:checked').value;
+            const selectedGroup = groupOption === 'specific' ? document.getElementById('assignment-group').value : null;
+            
+            if (!title || !subjectId || !description || !dueDate) {
+                showAlert('Complete los campos obligatorios', 'warning');
+                return;
+            }
+            
+            if (groupOption === 'specific' && !selectedGroup) {
+                showAlert('Por favor seleccione un grupo', 'warning');
+                return;
+            }
+            
+            try {
+                const response = await fetch('tasks_api.php?action=create_task', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        organization_id: currentUser.organization_id,
+                        teacher_id: currentUser.id,
+                        subject_id: subjectId,
+                        group: selectedGroup, // Agregar el grupo seleccionado
+                        title: title,
+                        description: description,
+                        due_date: dueDate.split('T')[0],
+                        max_score: maxScore || 10,
+                        target_type: groupOption === 'specific' ? 'group' : 'all'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    showAlert('📝 Tarea creada y asignada a estudiantes', 'success');
+                    
+                    // Limpiar formulario
+                    document.getElementById('assignment-title').value = '';
+                    document.getElementById('assignment-description').value = '';
+                    document.getElementById('assignment-due').value = '';
+                    
+                    // Recargar lista de tareas
+                    loadTeacherTasks();
+                } else {
+                    showAlert('Error: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showAlert('Error de conexión', 'error');
+            }
+        }
+        
+        async function loadTeacherTasks() {
+            try {
+                const response = await fetch(`tasks_api.php?action=get_teacher_tasks&teacher_id=${currentUser.id}`);
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    // Actualizar tabla de tareas
+                    console.log('Tareas cargadas:', data.tasks);
+                }
+            } catch (error) {
+                console.error('Error cargando tareas:', error);
+            }
+        }
+        
+        function viewSubmissions(assignmentId) {
+            showAlert(`📄 Viendo entregas de la tarea ${assignmentId}`, 'info');
+        }
+        
+        function gradeAssignments(assignmentId) {
+            showAlert(`📝 Calificando tareas ${assignmentId}`, 'info');
+        }
+        
+        function sendReminder(assignmentId) {
+            showAlert(`🔔 Recordatorio enviado para tarea ${assignmentId}`, 'success');
+        }
+        
+        function createInteractiveQuiz() {
+            const subject = document.getElementById('grade-subject').value;
+            if (!subject) {
+                showAlert('Seleccione una materia primero', 'warning');
+                return;
+            }
+            
+            showSection('quizzes');
+            // Pre-llenar la materia seleccionada
+            document.getElementById('quiz-subject').value = subject;
+            showAlert('🧠 Creando quiz interactivo para la materia seleccionada', 'info');
+        }
+
+        function generateReport() {
+            const form = document.createElement('div');
+            form.innerHTML = `
+                <div class="form-grid">
+                    <div class="form-group"><label>Estudiante ID</label><input id="rep-student" type="number" placeholder="ID del estudiante"></div>
+                    <div class="form-group"><label>Período</label>
+                        <select id="rep-period">
+                            <option value="">Todos</option>
+                            <option value="current">Actual</option>
+                            <option value="previous">Anterior</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="text-align:right;"><button class="btn" id="rep-run">Generar</button></div>
+                <div id="rep-output" style="margin-top:1rem;"></div>
+            `;
+            openSimpleModal('Generar Reporte', form.outerHTML);
+            setTimeout(() => {
+                const btn = document.getElementById('rep-run');
+                if (!btn) return;
+                btn.onclick = async function() {
+                    const studentId = parseInt(document.getElementById('rep-student').value || '0', 10);
+                    const period = document.getElementById('rep-period').value;
+                    if (!studentId) { showAlert('Ingrese ID de estudiante', 'warning'); return; }
+                    const q = new URLSearchParams();
+                    q.set('user_id', currentUser.id);
+                    q.set('student_id', studentId);
+                    if (period) q.set('period', period);
+                    try {
+                        const resp = await fetch(`/api/routes/student-grades.php/report?${q.toString()}`);
+                        const data = await resp.json();
+                        const subjects = data.subjects || [];
+                        const rows = subjects.map(s => `<tr><td>${s.subject}</td><td>${(parseFloat(s.average_score||0)).toFixed(1)}</td><td>${s.total_grades}</td></tr>`).join('');
+                        const html = `<div class="table-responsive"><table class="table"><thead><tr><th>Materia</th><th>Promedio</th><th>#Notas</th></tr></thead><tbody>${rows || '<tr><td colspan=3>Sin datos</td></tr>'}</tbody></table></div>`;
+                        document.getElementById('rep-output').innerHTML = html;
+                    } catch (e) {
+                        document.getElementById('rep-output').innerHTML = '<div class="alert alert-error">Error generando reporte</div>';
+                    }
+                }
+            }, 0);
+        }
+
+        function exportReport() {
+            showAlert('📥 Exportando reporte a PDF...', 'success');
+        }
+
+        function openSimpleModal(title, bodyHtml) {
+            const wrap = document.createElement('div');
+            wrap.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1600;display:flex;align-items:center;justify-content:center;';
+            wrap.innerHTML = `<div style="background:white;padding:1rem;border-radius:8px;max-width:720px;width:95%;max-height:90%;overflow:auto;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;"><h3 style="margin:0;">${title}</h3><button class="btn" onclick="this.closest('div').parentElement.parentElement.remove()">Cerrar</button></div>
+                <div>${bodyHtml}</div>
+            </div>`;
+            document.body.appendChild(wrap);
+        }
+
+        async function viewClassDetails(classId) {
+            try {
+                const resp = await fetch(`/api/routes/subjects.php?user_id=${currentUser.id}`);
+                const data = await resp.json();
+                const list = data.subjects || [];
+                const rows = list.map(s => `<tr><td>${s.name}</td><td>${s.area || '-'}</td><td>${s.hours_per_week || '-'}</td></tr>`).join('');
+                const html = `<div class="table-responsive"><table class="table"><thead><tr><th>Materia</th><th>Área</th><th>Horas/Sem</th></tr></thead><tbody>${rows || '<tr><td colspan=3>Sin materias</td></tr>'}</tbody></table></div>`;
+                openSimpleModal(`Detalles de la clase ${classId}`, html);
+            } catch (e) {
+                showAlert('Error cargando materias', 'error');
+            }
+        }
+
+        function gradeClass(classId) {
+            showSection('grades');
+        }
+
+        function viewStudentDetail(studentId) {
+            showAlert(`Ver detalle del estudiante ${studentId}`, 'success');
+        }
+
+        function contactParent(studentId) {
+            if (communicationSystem) {
+                communicationSystem.openCommunicationModal();
+            }
+        }
+
+        function loadStudentsBySubject() {
+            const subjectId = document.getElementById('student-filter').value;
+            showAlert(`Cargando estudiantes de la materia ${subjectId}`, 'info');
+        }
+
+        function toggleSelectAll() {
+            const selectAll = document.getElementById('select-all');
+            const checkboxes = document.querySelectorAll('.student-checkbox');
+            checkboxes.forEach(cb => cb.checked = selectAll.checked);
+        }
+
+        function executeQuickAction() {
+            const action = document.getElementById('quick-action').value;
+            const selectedStudents = document.querySelectorAll('.student-checkbox:checked');
+            
+            if (!action) {
+                showAlert('Seleccione una acción', 'warning');
+                return;
+            }
+            
+            if (selectedStudents.length === 0) {
+                showAlert('Seleccione al menos un estudiante', 'warning');
+                return;
+            }
+            
+            switch(action) {
+                case 'grade_all':
+                    showSection('grades');
+                    showAlert(`Calificando ${selectedStudents.length} estudiantes`, 'info');
+                    break;
+                case 'attendance_today':
+                    showSection('attendance');
+                    showAlert('Abriendo control de asistencia', 'info');
+                    break;
+                case 'send_message':
+                    if (communicationSystem) {
+                        communicationSystem.openCommunicationModal();
+                    }
+                    break;
+            }
+        }
+
+        function openStudentModal(studentId) {
+            showAlert(`Abriendo perfil completo del estudiante ${studentId}`, 'info');
+        }
+
+        function quickGrade(studentId) {
+            showSection('grades');
+            showAlert(`Calificando estudiante ${studentId}`, 'info');
+        }
+
+        function exportStudentList() {
+            showAlert('📄 Exportando lista de estudiantes...', 'success');
+        }
+
+        async function loadAttendanceList() {
+            const subject = parseInt(document.getElementById('attendance-subject').value || '0', 10);
+            const date = document.getElementById('attendance-date').value || new Date().toISOString().slice(0,10);
+            const header = `<div>Asistencia para <strong>${subject || '-'}</strong> - <strong>${date}</strong></div>`;
+            openSimpleModal('Control de Asistencia', `${header}<div id="att-container" style="margin-top:.5rem;">Cargando...</div>`);
+            try {
+                const [stuResp, recResp] = await Promise.all([
+                    fetch(`/attendance_api.php?action=students&subject_id=${subject}`),
+                    fetch(`/attendance_api.php?subject_id=${subject}&date=${encodeURIComponent(date)}`)
+                ]);
+                const students = (await stuResp.json()).students || [];
+                const records = (await recResp.json()).records || [];
+                const map = {};
+                records.forEach(r => { map[r.student_id] = r.status; });
+                const rows = students.map(s => `
+                    <tr>
+                        <td>${s.full_name}</td>
+                        <td>
+                            <select class="attendance-status" data-student-id="${s.id}">
+                                <option value="present" ${map[s.id]==='present'?'selected':''}>Presente</option>
+                                <option value="absent" ${map[s.id]==='absent'?'selected':''}>Ausente</option>
+                                <option value="late" ${map[s.id]==='late'?'selected':''}>Tarde</option>
+                            </select>
+                        </td>
+                    </tr>
+                `).join('');
+                const html = `
+                    <div class="table-responsive">
+                        <table class="table"><thead><tr><th>Estudiante</th><th>Estado</th></tr></thead>
+                        <tbody id="att-modal-body">${rows || '<tr><td colspan=2>Sin estudiantes</td></tr>'}</tbody></table>
+                    </div>
+                    <div style="text-align:right;"><button class="btn" onclick="saveAllAttendance()">Guardar</button></div>`;
+                document.getElementById('att-container').innerHTML = html;
+                // Guardar en dataset para el post
+                const container = document.getElementById('att-container');
+                container.setAttribute('data-subject-id', String(subject));
+                container.setAttribute('data-date', date);
+            } catch (e) {
+                document.getElementById('att-container').innerHTML = '<div class="alert alert-error">Error cargando asistencia</div>';
+            }
+        }
+
+        function markAllPresent() {
+            document.querySelectorAll('.attendance-status').forEach(select => {
+                select.value = 'present';
+            });
+            showAlert('✅ Todos marcados como presentes', 'success');
+        }
+
+        function saveAttendanceRecord(studentId) {
+            showAlert(`Asistencia guardada para estudiante ${studentId}`, 'success');
+        }
+
+        async function saveAllAttendance() {
+            const container = document.getElementById('att-container');
+            const subjectId = parseInt(container.getAttribute('data-subject-id') || '0', 10);
+            const date = container.getAttribute('data-date') || new Date().toISOString().slice(0,10);
+            const records = Array.from(document.querySelectorAll('.attendance-status')).map(sel => ({
+                student_id: parseInt(sel.getAttribute('data-student-id'), 10),
+                status: sel.value
+            }));
+            try {
+                const resp = await fetch('/attendance_api.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ subject_id: subjectId, date, records })
+                });
+                const data = await resp.json();
+                if (resp.ok) showAlert(`💾 Asistencia guardada (${data.saved})`, 'success');
+                else showAlert(data.message || 'No se pudo guardar', 'error');
+            } catch (e) {
+                showAlert('Error de conexión', 'error');
+            }
+        }
+
+        function generateAttendanceReport() {
+            showAlert('📈 Generando reporte de asistencia...', 'info');
+        }
+
+        function exportAttendance() {
+            showAlert('📄 Exportando reporte de asistencia...', 'success');
+        }
+
+        function goToProfile() {
+            window.location.href = 'user_profile.html';
+        }
+
+        function showAlert(message, type) {
+            const alerts = document.getElementById('alerts');
+            alerts.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => alerts.innerHTML = '', 3000);
+        }
+
+        function logout() {
+            localStorage.removeItem('studymate_user');
+            localStorage.removeItem('studymate_token');
+            window.location.href = '/';
+        }
+
+        // ===== OTP (2FA) Docente - Demo =====
+        async function initOtp() {
+            try {
+                const resp = await fetch('/otp_api.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'init' }) });
+                const data = await resp.json();
+                const codeEl = document.getElementById('otp-demo-code');
+                if (codeEl && data.demo_code) codeEl.textContent = data.demo_code;
+            } catch (e) {}
+        }
+        async function verifyOtp() {
+            const code = (document.getElementById('otp-input')?.value || '').trim();
+            if (!code) { showAlert('Ingrese el código OTP', 'warning'); return; }
+            try {
+                const resp = await fetch('/otp_api.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'verify', code }) });
+                const data = await resp.json();
+                if (resp.ok) {
+                    sessionStorage.setItem('teacher_otp_verified', '1');
+                    document.getElementById('otp-overlay').style.display = 'none';
+                    document.getElementById('otp-modal').style.display = 'none';
+                    showAlert('Verificación completada', 'success');
+                } else {
+                    showAlert(data.message || 'Código inválido', 'error');
+                }
+            } catch (e) { showAlert('Error de conexión', 'error'); }
+        }
+        function openOtpModal() {
+            const overlay = document.getElementById('otp-overlay');
+            const modal = document.getElementById('otp-modal');
+            if (overlay) overlay.style.display = 'flex';
+            if (modal) modal.style.display = 'block';
+            initOtp();
+            setTimeout(() => { document.getElementById('otp-input')?.focus(); }, 0);
+            enableFocusTrap(modal, overlay);
+        }
+        function ensureOtpOrPrompt() {
+            const ok = sessionStorage.getItem('teacher_otp_verified') === '1';
+            if (!ok) {
+                openOtpModal();
+                showAlert('Por seguridad, verifica tu identidad con 2FA antes de continuar.', 'warning');
+                return false;
+            }
+            return true;
+        }
+        function enableFocusTrap(modal, overlay){
+            function onKey(e){
+                if (e.key === 'Escape') {
+                    overlay.style.display = 'none';
+                    modal.style.display = 'none';
+                    document.removeEventListener('keydown', onKey, true);
+                    return;
+                }
+                if (e.key === 'Tab') {
+                    const focusables = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+                    if (focusables.length === 0) return;
+                    const first = focusables[0];
+                    const last = focusables[focusables.length - 1];
+                    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+                    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+                }
+            }
+            document.addEventListener('keydown', onKey, true);
+        }
+        // ===== Preferencia de columnas: mostrar todo =====
+        (function initShowAllPreference(){
+            try {
+                if (localStorage.getItem('teacher_show_all') === '1') {
+                    document.body.classList.add('show-all');
+                }
+            } catch (e) {}
+        })();
+
+        function toggleShowAll(){
+            const on = document.body.classList.toggle('show-all');
+            try { localStorage.setItem('teacher_show_all', on ? '1' : '0'); } catch (e) {}
+            showAlert(on ? 'Mostrando todas las columnas' : 'Mostrando vista compacta', 'info');
+        }
+    </script>
+</body>
+
+<div id="otp-overlay" style="display:none; position: fixed; z-index: 2000; inset: 0; background: rgba(0,0,0,0.6); align-items: center; justify-content: center;">
+    <div id="otp-modal" style="background: white; width: 95%; max-width: 420px; padding: 1.25rem; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+        <h3 style="margin-bottom: 0.75rem;">Verificación Adicional</h3>
+        <div style="color:#555; margin-bottom: 0.75rem;">Por seguridad, ingresa el código OTP enviado. Modo demo: usa el siguiente código.</div>
+        <div style="background:#f8f9fa; border:1px solid #e1e5ea; padding: 0.75rem; border-radius: 6px; margin-bottom: 0.75rem;">
+            Código demo: <strong id="otp-demo-code">••••••</strong>
+        </div>
+        <div class="form-group">
+            <label>OTP</label>
+            <input type="text" id="otp-input" placeholder="000000" style="width:100%; padding:0.5rem; border:1px solid #ddd; border-radius:4px;">
+        </div>
+        <div style="margin-top: 0.75rem; display:flex; gap:0.5rem; justify-content:flex-end;">
+            <button class="btn" onclick="initOtp()">Reenviar</button>
+            <button class="btn btn-success" onclick="verifyOtp()">Verificar</button>
+        </div>
+    </div>
+</div>
+</html>

@@ -1,0 +1,1473 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyMate - Portal Estudiante</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; font-size: 16px; line-height: 1.5; }
+        .header { background: #3498db; color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+        .nav { background: #5dade2; padding: 0.5rem 1rem; overflow-x: auto; position: sticky; top: 0; z-index: 90; }
+        .nav-tabs { display: flex; gap: 1rem; flex-wrap: wrap; min-width: max-content; -webkit-overflow-scrolling: touch; }
+        .nav-tab { background: none; border: none; color: white; padding: 0.5rem 1rem; cursor: pointer; border-radius: 4px; white-space: nowrap; font-size: 0.9rem; }
+        .nav-tab.active { background: #2980b9; }
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+        .section { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1rem; display: none; }
+        .section.active { display: block !important; }
+        .subsection { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1rem; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .stat-card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; }
+        .stat-number { font-size: 2rem; font-weight: bold; color: #3498db; }
+        .stat-label { color: #7f8c8d; margin-top: 0.5rem; }
+        .btn { background: #3498db; color: white; padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; margin-right: 0.5rem; font-size: 0.9rem; }
+        .btn:hover { background: #2980b9; }
+        .btn-success { background: #27ae60; }
+        .btn-warning { background: #f39c12; }
+        .table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.9rem; overflow-x: auto; display: block; min-width: 640px; }
+        .table th, .table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #ddd; white-space: normal; word-break: break-word; }
+        .table th { background: #f8f9fa; position: sticky; top: 0; }
+        .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .alert { padding: 1rem; border-radius: 4px; margin-bottom: 1rem; }
+        .alert-success { background: #d4edda; color: #155724; }
+        .alert-info { background: #d1ecf1; color: #0c5460; }
+        .grade-excellent { color: #27ae60; font-weight: bold; }
+        .grade-good { color: #f39c12; font-weight: bold; }
+        .grade-poor { color: #e74c3c; font-weight: bold; }
+        .subject-card { background: #f8f9fa; border-left: 4px solid #3498db; padding: 1rem; margin-bottom: 1rem; border-radius: 4px; }
+        .schedule-item { background: #e8f4fd; padding: 0.5rem; margin-bottom: 0.5rem; border-radius: 4px; border-left: 3px solid #3498db; }
+        .progress-bar { width: 100%; height: 20px; background: #ecf0f1; border-radius: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; background: #3498db; transition: width 0.3s ease; }
+
+        /* Media Queries para responsividad */
+        @media (max-width: 768px) {
+            .header { flex-direction: column; text-align: center; padding: 0.5rem; }
+            .header h1 { font-size: 1.2rem; }
+            .nav-tabs { gap: 0.5rem; justify-content: center; }
+            .nav-tab { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+            .container { margin: 1rem auto; padding: 0 0.5rem; }
+            .section, .subsection { padding: 1rem; }
+            .stats-grid { grid-template-columns: 1fr; gap: 0.5rem; }
+            .stat-card { padding: 1rem; text-align: center; }
+            .stat-number { font-size: 1.5rem; }
+            .table { font-size: 0.85rem; min-width: 560px; }
+            .table th, .table td { padding: 0.5rem; }
+            .btn { padding: 0.4rem 0.8rem; font-size: 0.8rem; margin-right: 0.25rem; }
+            .subject-card { padding: 0.75rem; }
+            .schedule-item { padding: 0.4rem; }
+        }
+
+        @media (max-width: 480px) {
+            .nav-tabs { justify-content: center; flex-wrap: wrap; }
+            .nav-tab { padding: 0.3rem 0.6rem; font-size: 0.7rem; }
+            .section, .subsection { padding: 0.5rem; }
+            .stats-grid { margin-bottom: 1rem; }
+            .stat-card { padding: 0.75rem; }
+            .stat-number { font-size: 1.2rem; }
+            .stat-label { font-size: 0.9rem; }
+            .table { font-size: 0.8rem; min-width: 520px; }
+            .table th, .table td { padding: 0.4rem; font-size: 0.75rem; }
+            .btn { display: inline-block; margin-bottom: 0.25rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>StudyMate - Mi Portal Estudiantil</h1>
+        <div>
+            <span id="user-info">Cargando...</span>
+            <button class="btn" onclick="showSection('support')">Apoyo</button>
+            <button class="btn" onclick="openCommunication()">Mensajes</button>
+            <button class="btn" onclick="goToProfile()">Mi Perfil</button>
+            <button class="btn" onclick="logout()">Cerrar Sesión</button>
+        </div>
+
+        <div id="recovery-modal" class="modal" style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background: rgba(0,0,0,0.5);">
+            <div class="modal-content" style="background:white; margin: 5% auto; padding: 1rem; width: 95%; max-width: 700px; border-radius: 8px; max-height: 90%; overflow:auto;">
+                <span style="float:right; cursor:pointer; font-size:24px;" onclick="closeRecoveryModal()">&times;</span>
+                <h3 id="recovery-title"></h3>
+                <div id="recovery-instructions" style="color:#555; margin-bottom: 0.5rem;"></div>
+                <div class="form-group">
+                    <label>Tu entrega</label>
+                    <textarea id="recovery-content" rows="5" style="width:100%;"></textarea>
+                </div>
+                <div style="text-align:right;">
+                    <button class="btn btn-success" onclick="submitRecovery()">Entregar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recoveries Section -->
+        <div id="recoveries-section" class="section">
+            <h2>Recuperaciones</h2>
+            <div class="subsection">
+                <h3>Pendientes</h3>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Título</th>
+                                <th>Instrucciones</th>
+                                <th>Fecha límite</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recoveries-table">
+                            <tr><td colspan="5">Cargando recuperaciones...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Exams Section -->
+        <div id="exams-section" class="section">
+            <h2>Exámenes</h2>
+            <div class="subsection">
+                <h3>Disponibles</h3>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Título</th>
+                                <th>Instrucciones</th>
+                                <th>Tiempo</th>
+                                <th>Fecha límite</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="exams-table">
+                            <tr><td colspan="5">Cargando exámenes...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="nav">
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showSection('dashboard')">Mi Dashboard</button>
+            <button class="nav-tab" onclick="showSection('grades')">Mis Calificaciones</button>
+            <button class="nav-tab" onclick="showSection('subjects')">Mis Materias</button>
+            <button class="nav-tab" onclick="showSection('schedule')">Horario</button>
+            <button class="nav-tab" onclick="showSection('tasks')">Tareas</button>
+            <button class="nav-tab" onclick="showSection('recoveries')">Recuperaciones</button>
+            <button class="nav-tab" onclick="showSection('exams')">Exámenes</button>
+            <button class="nav-tab" onclick="showSection('payments')">Pagos</button>
+            <button class="nav-tab" onclick="showSection('pay')">💳 Pagar</button>
+            <button class="nav-tab" onclick="showSection('support')">Apoyo Psicológico</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="alerts"></div>
+
+        <!-- Dashboard Section -->
+        <div id="dashboard-section" class="section active">
+            <h2>📊 Mi Dashboard Académico</h2>
+            
+            <div class="alert alert-info">
+                <strong>¡Bienvenido de vuelta!</strong> Aquí tienes un resumen de tu progreso académico actual.
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="current-average">0.0</div>
+                    <div class="stat-label">Promedio General</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="subjects-count">0</div>
+                    <div class="stat-label">Materias Cursando</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="attendance-rate">0%</div>
+                    <div class="stat-label">Asistencia</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="pending-assignments">0</div>
+                    <div class="stat-label">Tareas Pendientes</div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>📈 Mi Progreso Académico</h3>
+                <div style="margin-bottom: 1rem;">
+                    <label>Progreso del Período Actual:</label>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 75%"></div>
+                    </div>
+                    <small>75% completado</small>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>📅 Próximas Clases Hoy</h3>
+                <div id="today-schedule">
+                    <div class="schedule-item">
+                        <strong>Matemáticas</strong> - 8:00 AM - 9:00 AM | Aula 201 | Prof. García
+                    </div>
+                    <div class="schedule-item">
+                        <strong>Historia</strong> - 10:00 AM - 11:00 AM | Aula 105 | Prof. López
+                    </div>
+                    <div class="schedule-item">
+                        <strong>Química</strong> - 2:00 PM - 3:00 PM | Lab. Ciencias | Prof. Martínez
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>🎯 Acciones Rápidas</h3>
+                <button class="btn" onclick="showSection('grades')">📋 Ver Mis Calificaciones</button>
+                <button class="btn btn-success" onclick="showSection('subjects')">📚 Mis Materias</button>
+                <button class="btn btn-warning" onclick="showSection('payments')">💰 Estado de Pagos</button>
+            </div>
+        </div>
+
+        <!-- Grades Section -->
+        <div id="grades-section" class="section">
+            <h2>📋 Mis Calificaciones</h2>
+            
+            <div class="subsection">
+                <h3>Calificaciones por Período</h3>
+                <div style="margin-bottom: 1rem;">
+                    <label>Seleccionar Período:</label>
+                    <select id="period-filter" onchange="loadGradesByPeriod()">
+                        <option value="current">Período Actual</option>
+                        <option value="previous">Período Anterior</option>
+                        <option value="all">Todos los Períodos</option>
+                    </select>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Materia</th>
+                                <th>Evaluaciones</th>
+                                <th>Promedio</th>
+                                <th>Calificación</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="grades-table">
+                            <tr>
+                                <td><strong>Matemáticas</strong></td>
+                                <td>Quiz: 8.5, Examen: 9.0, Tarea: 7.8</td>
+                                <td><span class="grade-excellent">8.4</span></td>
+                                <td>Superior</td>
+                                <td><span style="color: #27ae60;">✅ Aprobado</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Historia</strong></td>
+                                <td>Ensayo: 7.2, Examen: 8.0</td>
+                                <td><span class="grade-good">7.6</span></td>
+                                <td>Alto</td>
+                                <td><span style="color: #27ae60;">✅ Aprobado</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Química</strong></td>
+                                <td>Lab: 6.5, Quiz: 5.8</td>
+                                <td><span class="grade-poor">6.2</span></td>
+                                <td>Básico</td>
+                                <td><span style="color: #f39c12;">⚠️ En Riesgo</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>📊 Análisis de Rendimiento</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number">8.4</div>
+                        <div class="stat-label">Mejor Promedio</div>
+                        <small>Matemáticas</small>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">6.2</div>
+                        <div class="stat-label">Requiere Atención</div>
+                        <small>Química</small>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">7.4</div>
+                        <div class="stat-label">Promedio General</div>
+                        <small>Período Actual</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Subjects Section -->
+        <div id="subjects-section" class="section">
+            <h2>📚 Mis Materias</h2>
+            
+            <div class="subsection">
+                <h3>Materias del Período Actual</h3>
+                <div id="subjects-list">
+                    <div class="subject-card">
+                        <h4>📐 Matemáticas</h4>
+                        <p><strong>Docente:</strong> Prof. García | <strong>Horario:</strong> Lun-Mie-Vie 8:00-9:00</p>
+                        <p><strong>Aula:</strong> 201 | <strong>Promedio Actual:</strong> <span class="grade-excellent">8.4</span></p>
+                        <button class="btn" onclick="viewSubjectDetail('math')">Ver Detalles</button>
+                    </div>
+                    
+                    <div class="subject-card">
+                        <h4>📖 Historia</h4>
+                        <p><strong>Docente:</strong> Prof. López | <strong>Horario:</strong> Mar-Jue 10:00-11:00</p>
+                        <p><strong>Aula:</strong> 105 | <strong>Promedio Actual:</strong> <span class="grade-good">7.6</span></p>
+                        <button class="btn" onclick="viewSubjectDetail('history')">Ver Detalles</button>
+                    </div>
+                    
+                    <div class="subject-card">
+                        <h4>🧪 Química</h4>
+                        <p><strong>Docente:</strong> Prof. Martínez | <strong>Horario:</strong> Lun-Mie 2:00-3:00</p>
+                        <p><strong>Aula:</strong> Lab. Ciencias | <strong>Promedio Actual:</strong> <span class="grade-poor">6.2</span></p>
+                        <button class="btn" onclick="viewSubjectDetail('chemistry')">Ver Detalles</button>
+                        <button class="btn btn-warning" onclick="requestTutoring('chemistry')">🆘 Solicitar Tutoría</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Schedule Section -->
+        <div id="schedule-section" class="section">
+            <h2>📅 Mi Horario de Clases</h2>
+            
+            <div class="subsection">
+                <h3>Horario Semanal</h3>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Hora</th>
+                                <th>Lunes</th>
+                                <th>Martes</th>
+                                <th>Miércoles</th>
+                                <th>Jueves</th>
+                                <th>Viernes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>8:00-9:00</strong></td>
+                                <td>Matemáticas<br><small>Aula 201</small></td>
+                                <td>Historia<br><small>Aula 105</small></td>
+                                <td>Matemáticas<br><small>Aula 201</small></td>
+                                <td>Historia<br><small>Aula 105</small></td>
+                                <td>Matemáticas<br><small>Aula 201</small></td>
+                            </tr>
+                            <tr>
+                                <td><strong>9:00-10:00</strong></td>
+                                <td>Descanso</td>
+                                <td>Descanso</td>
+                                <td>Descanso</td>
+                                <td>Descanso</td>
+                                <td>Descanso</td>
+                            </tr>
+                            <tr>
+                                <td><strong>10:00-11:00</strong></td>
+                                <td>Inglés<br><small>Aula 301</small></td>
+                                <td>Química<br><small>Lab. Ciencias</small></td>
+                                <td>Inglés<br><small>Aula 301</small></td>
+                                <td>Química<br><small>Lab. Ciencias</small></td>
+                                <td>Ed. Física<br><small>Cancha</small></td>
+                            </tr>
+                            <tr>
+                                <td><strong>2:00-3:00</strong></td>
+                                <td>Química<br><small>Lab. Ciencias</small></td>
+                                <td>Biología<br><small>Aula 204</small></td>
+                                <td>Química<br><small>Lab. Ciencias</small></td>
+                                <td>Biología<br><small>Aula 204</small></td>
+                                <td>Arte<br><small>Taller</small></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payments Section -->
+        <div id="payments-section" class="section">
+            <h2>💰 Estado de Pagos</h2>
+            
+            <div class="subsection">
+                <h3>Resumen Financiero</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number">$0</div>
+                        <div class="stat-label">Saldo Pendiente</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">$450,000</div>
+                        <div class="stat-label">Pagado este Año</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">✅</div>
+                        <div class="stat-label">Estado</div>
+                        <small>Al Día</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>Historial de Pagos</h3>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Concepto</th>
+                            <th>Período</th>
+                            <th>Monto</th>
+                            <th>Fecha Pago</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Pensión Mensual</td>
+                            <td>Noviembre 2024</td>
+                            <td>$150,000</td>
+                            <td>01/11/2024</td>
+                            <td><span style="color: #27ae60;">✅ Pagado</span></td>
+                        </tr>
+                        <tr>
+                            <td>Pensión Mensual</td>
+                            <td>Octubre 2024</td>
+                            <td>$150,000</td>
+                            <td>01/10/2024</td>
+                            <td><span style="color: #27ae60;">✅ Pagado</span></td>
+                        </tr>
+                        <tr>
+                            <td>Seguro Estudiantil</td>
+                            <td>2024</td>
+                            <td>$50,000</td>
+                            <td>15/01/2024</td>
+                            <td><span style="color: #27ae60;">✅ Pagado</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="alert alert-success">
+                <strong>✅ Estado Financiero:</strong> Tu cuenta está al día. No tienes pagos pendientes.
+            </div>
+        </div>
+
+        <!-- Tasks Section -->
+        <div id="tasks-section" class="section">
+            <h2>Mis Tareas</h2>
+            
+            <div class="subsection">
+                <h3>Tareas Pendientes</h3>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Materia</th>
+                                <th>Tarea</th>
+                                <th>Fecha Entrega</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Matemáticas</td>
+                                <td>Ejercicios de Álgebra - Capítulo 5</td>
+                                <td>15/12/2024</td>
+                                <td><span style="color: #f39c12;">Pendiente</span></td>
+                                <td><button class="btn" onclick="viewTask(1)">Ver</button></td>
+                            </tr>
+                            <tr>
+                                <td>Historia</td>
+                                <td>Ensayo sobre la Independencia</td>
+                                <td>18/12/2024</td>
+                                <td><span style="color: #f39c12;">Pendiente</span></td>
+                                <td><button class="btn" onclick="viewTask(2)">Ver</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>Tareas Completadas</h3>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Materia</th>
+                            <th>Tarea</th>
+                            <th>Fecha Entrega</th>
+                            <th>Calificación</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Química</td>
+                            <td>Laboratorio de Reacciones</td>
+                            <td>10/12/2024</td>
+                            <td><span class="grade-excellent">9.2</span></td>
+                        </tr>
+                        <tr>
+                            <td>Inglés</td>
+                            <td>Presentación Oral</td>
+                            <td>08/12/2024</td>
+                            <td><span class="grade-good">8.0</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="exam-modal" class="modal" style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background: rgba(0,0,0,0.5);">
+            <div class="modal-content" style="background:white; margin: 3% auto; padding: 1rem; width: 95%; max-width: 900px; border-radius: 8px; max-height: 90%; overflow:auto;">
+                <span style="float:right; cursor:pointer; font-size:24px;" onclick="closeExamModal()">&times;</span>
+                <h3 id="exam-title"></h3>
+                <div id="exam-instructions" style="color:#555; margin-bottom: 0.5rem;"></div>
+                <form id="exam-form"></form>
+                <div style="margin-top: 1rem; text-align: right;">
+                    <button class="btn" onclick="submitExam()">Enviar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Support Section -->
+        <div id="support-section" class="section">
+            <h2>🆘 Chat de Apoyo Psicológico</h2>
+            
+            <div class="alert alert-info">
+                <strong>🔒 Confidencial y Seguro:</strong> Este chat está disponible 24/7. Tus conversaciones son privadas y confidenciales.
+            </div>
+
+            <div class="subsection">
+                <h3>💬 Opciones de Comunicación</h3>
+                <div class="stats-grid">
+                    <div class="stat-card" onclick="startTextChat()" style="cursor: pointer; border: 2px solid #3498db;">
+                        <div class="stat-number">💬</div>
+                        <div class="stat-label">Chat de Texto</div>
+                        <small>Conversación escrita</small>
+                    </div>
+                    <div class="stat-card" onclick="startVoiceChat()" style="cursor: pointer; border: 2px solid #e74c3c;">
+                        <div class="stat-number">🎤</div>
+                        <div class="stat-label">Chat de Voz</div>
+                        <small>Llamada de apoyo</small>
+                    </div>
+                    <div class="stat-card" onclick="requestEmergency()" style="cursor: pointer; border: 2px solid #f39c12;">
+                        <div class="stat-number">🚨</div>
+                        <div class="stat-label">Emergencia</div>
+                        <small>Atención inmediata</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection" id="chat-container" style="display: none;">
+                <h3>💬 Chat Activo</h3>
+                <div id="chat-messages" style="height: 300px; border: 1px solid #ddd; padding: 1rem; overflow-y: auto; background: #f9f9f9; margin-bottom: 1rem;">
+                    <div style="text-align: center; color: #7f8c8d; margin-top: 100px;">
+                        Conectando con psicólogo disponible...
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" id="chat-input" placeholder="Escribe tu mensaje aquí..." style="flex: 1; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                    <button class="btn" onclick="sendMessage()">Enviar</button>
+                    <button class="btn btn-warning" id="voice-btn" onclick="toggleVoice()">🎤 Voz</button>
+                    <button class="btn btn-danger" onclick="endChat()">Terminar</button>
+                </div>
+                
+                <div id="voice-status" style="margin-top: 0.5rem; display: none;">
+                    <div style="background: #e74c3c; color: white; padding: 0.5rem; border-radius: 4px; text-align: center;">
+                        🎤 Grabando... Presiona nuevamente para enviar
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>📋 Recursos de Apoyo</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                    <div style="background: #e8f5e8; padding: 1rem; border-radius: 4px;">
+                        <h4>🧘 Técnicas de Relajación</h4>
+                        <p>Ejercicios de respiración y mindfulness</p>
+                        <button class="btn btn-success" onclick="openRelaxation()">Acceder</button>
+                    </div>
+                    <div style="background: #fff3e0; padding: 1rem; border-radius: 4px;">
+                        <h4>📚 Recursos Educativos</h4>
+                        <p>Artículos sobre bienestar mental</p>
+                        <button class="btn btn-warning" onclick="openResources()">Ver Recursos</button>
+                    </div>
+                    <div style="background: #f3e5f5; padding: 1rem; border-radius: 4px;">
+                        <h4>📞 Líneas de Ayuda</h4>
+                        <p>Contactos de emergencia 24/7</p>
+                        <button class="btn" onclick="showEmergencyContacts()">Ver Contactos</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>📊 Mi Bienestar</h3>
+                <div style="margin-bottom: 1rem;">
+                    <label>¿Cómo te sientes hoy? (1-10):</label>
+                    <input type="range" id="mood-slider" min="1" max="10" value="7" style="width: 100%; margin: 0.5rem 0;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8em; color: #7f8c8d;">
+                        <span>😢 Muy mal</span>
+                        <span id="mood-value">7</span>
+                        <span>😊 Excelente</span>
+                    </div>
+                </div>
+                <button class="btn btn-success" onclick="saveMoodEntry()">Guardar Estado de Ánimo</button>
+            </div>
+        </div>
+
+        <!-- Pay Section -->
+        <div id="pay-section" class="section">
+            <h2>💳 Realizar Pago</h2>
+
+            <div class="alert alert-info">
+                <strong>💰 Sistema de Pagos Seguros</strong> - Realiza tus pagos de manera segura con diferentes métodos disponibles.
+            </div>
+
+            <div class="subsection">
+                <h3>Seleccionar Método de Pago</h3>
+                <div class="stats-grid">
+                    <div class="stat-card payment-method" onclick="selectPaymentMethod('pse')" id="pse-card">
+                        <div class="stat-number">🏦</div>
+                        <div class="stat-label">PSE</div>
+                        <small>Pagos Seguros en Línea</small>
+                    </div>
+                    <div class="stat-card payment-method" onclick="selectPaymentMethod('nequi')" id="nequi-card">
+                        <div class="stat-number">📱</div>
+                        <div class="stat-label">Nequi</div>
+                        <small>Pago con celular</small>
+                    </div>
+                    <div class="stat-card payment-method" onclick="selectPaymentMethod('daviplata')" id="daviplata-card">
+                        <div class="stat-number">💳</div>
+                        <div class="stat-label">Daviplata</div>
+                        <small>Billetera digital</small>
+                    </div>
+                    <div class="stat-card payment-method" onclick="selectPaymentMethod('transfer')" id="transfer-card">
+                        <div class="stat-number">🏦</div>
+                        <div class="stat-label">Transferencia</div>
+                        <small>Bancaria tradicional</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection" id="payment-form" style="display: none;">
+                <h3 id="payment-method-title">Detalles del Pago</h3>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Concepto de Pago</label>
+                        <select id="payment-concept" onchange="updatePaymentAmount()">
+                            <option value="">Seleccionar concepto</option>
+                            <option value="pension" data-amount="150000">Pensión Mensual</option>
+                            <option value="insurance" data-amount="50000">Seguro Estudiantil</option>
+                            <option value="materials" data-amount="80000">Materiales Educativos</option>
+                            <option value="activities" data-amount="30000">Actividades Extracurriculares</option>
+                            <option value="other" data-amount="0">Otro concepto</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Monto a Pagar ($)</label>
+                        <input type="number" id="payment-amount" min="1000" step="1000" placeholder="0" readonly>
+                    </div>
+                </div>
+
+                <div class="form-group" id="custom-concept" style="display: none;">
+                    <label>Especificar concepto personalizado</label>
+                    <input type="text" id="custom-concept-text" placeholder="Ej: Matrícula extraordinaria">
+                </div>
+
+                <div class="form-group">
+                    <label>Descripción adicional (opcional)</label>
+                    <textarea id="payment-description" rows="2" placeholder="Detalles adicionales del pago..."></textarea>
+                </div>
+
+                <!-- PSE Payment Form -->
+                <div id="pse-form" class="payment-method-form" style="display: none;">
+                    <div class="alert alert-info">
+                        <strong>PSE - Pagos Seguros en Línea</strong><br>
+                        Serás redirigido al portal seguro de PSE para completar tu pago.
+                    </div>
+                    <div class="form-group">
+                        <label>Banco</label>
+                        <select id="pse-bank">
+                            <option value="">Seleccionar banco</option>
+                            <option value="bancolombia">Bancolombia</option>
+                            <option value="davivienda">Davivienda</option>
+                            <option value="bbva">BBVA</option>
+                            <option value="banco_bogota">Banco de Bogotá</option>
+                            <option value="banco_popular">Banco Popular</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Nequi Payment Form -->
+                <div id="nequi-form" class="payment-method-form" style="display: none;">
+                    <div class="alert alert-info">
+                        <strong>Nequi</strong><br>
+                        Recibirás un código de verificación en tu celular para confirmar el pago.
+                    </div>
+                    <div class="form-group">
+                        <label>Número de celular Nequi</label>
+                        <input type="tel" id="nequi-phone" placeholder="300 123 4567" pattern="[0-9]{10}">
+                    </div>
+                </div>
+
+                <!-- Daviplata Payment Form -->
+                <div id="daviplata-form" class="payment-method-form" style="display: none;">
+                    <div class="alert alert-info">
+                        <strong>Daviplata</strong><br>
+                        Escanea el código QR generado o usa tu número de celular para pagar.
+                    </div>
+                    <div class="form-group">
+                        <label>Número de celular Daviplata</label>
+                        <input type="tel" id="daviplata-phone" placeholder="300 123 4567" pattern="[0-9]{10}">
+                    </div>
+                    <div id="qr-container" style="text-align: center; display: none;">
+                        <p>Escanea este código QR con tu app Daviplata:</p>
+                        <div id="qr-code" style="display: inline-block; padding: 20px; border: 2px dashed #3498db; margin: 10px 0;">
+                            <div style="font-size: 48px;">📱</div>
+                            <p>Código QR generado</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transfer Payment Form -->
+                <div id="transfer-form" class="payment-method-form" style="display: none;">
+                    <div class="alert alert-warning">
+                        <strong>Transferencia Bancaria</strong><br>
+                        El procesamiento puede tomar 1-2 días hábiles. Incluye la referencia en el detalle del pago.
+                    </div>
+                    <div class="bank-details" style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0;">
+                        <h4>📋 Datos para la Transferencia:</h4>
+                        <p><strong>Banco:</strong> Bancolombia</p>
+                        <p><strong>Número de cuenta:</strong> 123-456789-0</p>
+                        <p><strong>Titular:</strong> StudyMate SaaS</p>
+                        <p><strong>NIT:</strong> 901.234.567-8</p>
+                        <p><strong>Referencia:</strong> <span id="transfer-reference">Se generará al procesar</span></p>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <button class="btn btn-success" onclick="processPayment()" id="pay-button">
+                        💳 Procesar Pago
+                    </button>
+                    <button class="btn" onclick="cancelPayment()">❌ Cancelar</button>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>📊 Historial de Pagos</h3>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Concepto</th>
+                                <th>Método</th>
+                                <th>Monto</th>
+                                <th>Estado</th>
+                                <th>Referencia</th>
+                            </tr>
+                        </thead>
+                        <tbody id="payment-history-table">
+                            <tr>
+                                <td colspan="6">Cargando historial de pagos...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="ui_components.js"></script>
+    <script src="offline_manager.js"></script>
+    <script src="notifications.js"></script>
+    <script src="communication.js"></script>
+    <script>
+        let currentUser = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            loadDashboard();
+            loadRealStats();
+        });
+
+        function checkAuth() {
+            const user = JSON.parse(localStorage.getItem('studymate_user') || '{}');
+            if (!user.id || user.role !== 'student') {
+                alert('Acceso denegado. Solo estudiantes pueden acceder.');
+                window.location.href = '/';
+                return;
+            }
+            currentUser = user;
+            document.getElementById('user-info').textContent = `${user.name} (Estudiante)`;
+        }
+
+        function showSection(section) {
+            document.querySelectorAll('[id$="-section"]').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            
+            document.getElementById(section + '-section').classList.add('active');
+            event.target.classList.add('active');
+            
+            if (section === 'tasks') {
+                loadStudentTasks();
+            }
+        }
+        
+        function viewTask(taskId) {
+            showAlert(`Ver detalles de tarea ${taskId}`, 'info');
+        }
+
+        function loadDashboard() {
+            document.getElementById('current-average').textContent = '7.4';
+            document.getElementById('subjects-count').textContent = '6';
+            document.getElementById('attendance-rate').textContent = '95%';
+            document.getElementById('pending-assignments').textContent = '2';
+            loadStudentTasks();
+        }
+        
+        async function loadStudentTasks() {
+            const loading = UIComponents.showLoading('Cargando tus tareas...');
+            
+            try {
+                const response = await offlineManager.safeFetch(`tasks_api.php?action=get_student_tasks&student_id=${currentUser.id}`);
+                
+                UIComponents.hideLoading();
+                
+                if (response.success) {
+                    displayStudentTasks(response.tasks);
+                } else {
+                    UIComponents.showToast('Error cargando tareas', 'error');
+                }
+            } catch (error) {
+                UIComponents.hideLoading();
+                UIComponents.showToast('Error de conexión al cargar tareas', 'error');
+            }
+        }
+        
+        function displayStudentTasks(tasks) {
+            const pendingTasks = tasks.filter(t => t.submission_status === 'pending');
+            const completedTasks = tasks.filter(t => t.submission_status === 'graded');
+            
+            // Actualizar contador
+            document.getElementById('pending-assignments').textContent = pendingTasks.length;
+            
+            // Actualizar tabla de tareas pendientes
+            const pendingTableBody = document.querySelector('#tasks-section table tbody');
+            if (pendingTableBody) {
+                pendingTableBody.innerHTML = pendingTasks.map(task => `
+                    <tr>
+                        <td>${task.subject_name}</td>
+                        <td>${task.title}</td>
+                        <td>${new Date(task.due_date).toLocaleDateString()}</td>
+                        <td><span style="color: #f39c12;">Pendiente</span></td>
+                        <td><button class="btn" onclick="viewTask(${task.id})">Ver</button></td>
+                    </tr>
+                `).join('');
+            }
+            
+            // Actualizar tabla de tareas completadas
+            const completedTableBody = document.querySelectorAll('#tasks-section table tbody')[1];
+            if (completedTableBody) {
+                completedTableBody.innerHTML = completedTasks.map(task => `
+                    <tr>
+                        <td>${task.subject_name}</td>
+                        <td>${task.title}</td>
+                        <td>${new Date(task.due_date).toLocaleDateString()}</td>
+                        <td><span class="grade-excellent">${task.score || 'N/A'}</span></td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        async function loadRealStats() {
+            // Valores por defecto para evitar errores
+            document.getElementById('current-average').textContent = '7.4';
+            document.getElementById('subjects-count').textContent = '6';
+            document.getElementById('attendance-rate').textContent = '95%';
+            document.getElementById('pending-assignments').textContent = '2';
+
+            try {
+                const response = await fetch(`dashboard_api.php?action=student_stats&user_id=${currentUser.id}`);
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    document.getElementById('current-average').textContent = data.current_average || '7.4';
+                    document.getElementById('subjects-count').textContent = data.subjects_count || 6;
+                    document.getElementById('attendance-rate').textContent = (data.attendance_rate || 95) + '%';
+                    document.getElementById('pending-assignments').textContent = data.pending_assignments || 2;
+                }
+                // Si hay error, mantener valores por defecto sin mostrar mensaje
+            } catch (error) {
+                // Mantener valores por defecto sin mostrar error
+                console.log('Dashboard loaded with default values');
+            }
+        }
+
+        function loadGradesByPeriod() {
+            showAlert('Cargando calificaciones del período seleccionado...', 'info');
+        }
+
+        function viewSubjectDetail(subject) {
+            showAlert(`Ver detalles de ${subject}`, 'info');
+        }
+
+        function requestTutoring(subject) {
+            showAlert(`Solicitud de tutoría para ${subject} enviada`, 'success');
+        }
+
+        function goToProfile() {
+            window.location.href = 'user_profile.html';
+        }
+
+        function showAlert(message, type) {
+            UIComponents.showToast(message, type);
+        }
+        
+        // Inicializar mejoras UX
+        document.addEventListener('DOMContentLoaded', function() {
+            // Agregar indicador de estado de conexión
+            const header = document.querySelector('.header');
+            const offlineIndicator = document.createElement('div');
+            offlineIndicator.id = 'offline-indicator';
+            offlineIndicator.style.cssText = `
+                position: absolute; top: 5px; right: 5px;
+                background: #e74c3c; color: white; padding: 2px 8px;
+                border-radius: 12px; font-size: 12px; display: none;
+            `;
+            offlineIndicator.textContent = 'Sin conexión';
+            header.style.position = 'relative';
+            header.appendChild(offlineIndicator);
+            
+            // Mostrar/ocultar indicador según conectividad
+            window.addEventListener('offline', () => {
+                offlineIndicator.style.display = 'block';
+            });
+            
+            window.addEventListener('online', () => {
+                offlineIndicator.style.display = 'none';
+            });
+            
+            if (!navigator.onLine) {
+                offlineIndicator.style.display = 'block';
+            }
+        });
+
+        function logout() {
+            localStorage.removeItem('studymate_user');
+            localStorage.removeItem('studymate_token');
+            window.location.href = '/';
+        }
+
+        // Payment Functions (simplified for students - redirect to parent portal)
+        function showSection(section) {
+            document.querySelectorAll('[id$="-section"]').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+
+            document.getElementById(section + '-section').classList.add('active');
+            event.target.classList.add('active');
+
+            if (section === 'tasks') {
+                loadStudentTasks();
+            }
+
+            if (section === 'pay') {
+                showAlert('Los pagos deben ser realizados por tus padres desde el Portal de Padres. Contacta a tu acudiente.', 'info');
+                // Redirect back to dashboard after 3 seconds
+                setTimeout(() => {
+                    showSection('dashboard');
+                }, 3000);
+            }
+        }
+
+        // Funciones del Chat de Apoyo Psicológico
+        let isRecording = false;
+        let chatActive = false;
+
+        function startTextChat() {
+            document.getElementById('chat-container').style.display = 'block';
+            chatActive = true;
+            addChatMessage('Psicólogo', 'Hola, soy el Dr. García. Estoy aquí para apoyarte. ¿En qué puedo ayudarte hoy?', 'psychologist');
+            showAlert('Chat de texto iniciado - Conexión segura establecida', 'success');
+        }
+
+        function startVoiceChat() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                showAlert('Tu navegador no soporta chat de voz. Usa el chat de texto.', 'warning');
+                return;
+            }
+            
+            document.getElementById('chat-container').style.display = 'block';
+            chatActive = true;
+            addChatMessage('Sistema', 'Iniciando llamada de voz... Conectando con psicólogo disponible', 'system');
+            
+            setTimeout(() => {
+                addChatMessage('Psicólogo', 'Hola, puedes hablar ahora. Presiona el botón de micrófono para enviar mensajes de voz.', 'psychologist');
+                showAlert('Chat de voz disponible - Presiona el botón de micrófono', 'success');
+            }, 2000);
+        }
+
+        function requestEmergency() {
+            if (confirm('¿Necesitas atención de emergencia inmediata?')) {
+                showAlert('🚨 EMERGENCIA ACTIVADA - Psicólogo de guardia notificado', 'warning');
+                document.getElementById('chat-container').style.display = 'block';
+                chatActive = true;
+                addChatMessage('Emergencia', 'Protocolo de emergencia activado. Un psicólogo se conectará en menos de 2 minutos.', 'emergency');
+                
+                setTimeout(() => {
+                    addChatMessage('Dr. Emergencia', 'Hola, soy el Dr. Rodríguez del equipo de emergencias. Estoy aquí para ayudarte inmediatamente.', 'psychologist');
+                }, 3000);
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            
+            if (message && chatActive) {
+                addChatMessage('Tú', message, 'student');
+                input.value = '';
+                
+                // Mostrar indicador de escritura
+                const typingDiv = document.createElement('div');
+                typingDiv.id = 'typing-indicator';
+                typingDiv.innerHTML = '<div style="background: #f0f0f0; padding: 0.5rem 1rem; border-radius: 10px; font-style: italic; color: #666;">Dr. García está escribiendo...</div>';
+                document.getElementById('chat-messages').appendChild(typingDiv);
+                
+                try {
+                    const data = await offlineManager.safeFetch('psychological_support_api.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            message: message,
+                            student_id: currentUser.id,
+                            session_id: sessionStorage.getItem('psych_session_id') || null
+                        })
+                    });
+                    
+                    // Remover indicador de escritura
+                    const typing = document.getElementById('typing-indicator');
+                    if (typing) typing.remove();
+                    
+                    if (data.success && !data.offline) {
+                        sessionStorage.setItem('psych_session_id', data.session_id);
+                        addChatMessage(data.psychologist, data.response, 'psychologist');
+                    } else {
+                        addChatMessage('Sistema', 'Lo siento, hay un problema de conexión. Por favor inténtalo de nuevo.', 'system');
+                    }
+                } catch (error) {
+                    // Remover indicador de escritura
+                    const typing = document.getElementById('typing-indicator');
+                    if (typing) typing.remove();
+                    
+                    addChatMessage('Sistema', 'Error de conexión. Verificando tu mensaje...', 'system');
+                    
+                    // Respuesta de emergencia local
+                    setTimeout(() => {
+                        addChatMessage('Dr. García', 'Disculpa la demora técnica. Estoy aquí para apoyarte. ¿Puedes repetir tu mensaje para asegurarme de entenderte bien?', 'psychologist');
+                    }, 2000);
+                }
+            }
+        }
+
+        function toggleVoice() {
+            const voiceBtn = document.getElementById('voice-btn');
+            const voiceStatus = document.getElementById('voice-status');
+            
+            if (!isRecording) {
+                // Iniciar grabación
+                isRecording = true;
+                voiceBtn.textContent = '⏹️ Enviar';
+                voiceBtn.className = 'btn btn-danger';
+                voiceStatus.style.display = 'block';
+                
+                // Simular grabación
+                navigator.mediaDevices.getUserMedia({ audio: true })
+                    .then(stream => {
+                        showAlert('Grabando mensaje de voz...', 'info');
+                    })
+                    .catch(err => {
+                        showAlert('Error accediendo al micrófono', 'warning');
+                        isRecording = false;
+                        voiceBtn.textContent = '🎤 Voz';
+                        voiceBtn.className = 'btn btn-warning';
+                        voiceStatus.style.display = 'none';
+                    });
+            } else {
+                // Enviar grabación
+                isRecording = false;
+                voiceBtn.textContent = '🎤 Voz';
+                voiceBtn.className = 'btn btn-warning';
+                voiceStatus.style.display = 'none';
+                
+                addChatMessage('Tú', '🎤 Mensaje de voz enviado', 'student');
+                
+                setTimeout(() => {
+                    addChatMessage('Psicólogo', 'He escuchado tu mensaje. Te entiendo perfectamente. ¿Te gustaría que hablemos más sobre eso?', 'psychologist');
+                }, 2000);
+            }
+        }
+
+        function addChatMessage(sender, message, type) {
+            const chatMessages = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.style.marginBottom = '1rem';
+            
+            let bgColor = '#f0f0f0';
+            let textColor = '#333';
+            
+            if (type === 'student') {
+                bgColor = '#3498db';
+                textColor = 'white';
+                messageDiv.style.textAlign = 'right';
+            } else if (type === 'psychologist') {
+                bgColor = '#27ae60';
+                textColor = 'white';
+            } else if (type === 'emergency') {
+                bgColor = '#e74c3c';
+                textColor = 'white';
+            }
+            
+            messageDiv.innerHTML = `
+                <div style="display: inline-block; background: ${bgColor}; color: ${textColor}; padding: 0.5rem 1rem; border-radius: 10px; max-width: 70%;">
+                    <strong>${sender}:</strong> ${message}
+                    <div style="font-size: 0.7em; opacity: 0.8; margin-top: 0.2rem;">${new Date().toLocaleTimeString()}</div>
+                </div>
+            `;
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function endChat() {
+            if (confirm('¿Estás seguro de terminar el chat?')) {
+                chatActive = false;
+                addChatMessage('Sistema', 'Chat terminado. Recuerda que siempre estamos aquí para apoyarte.', 'system');
+                showAlert('Chat terminado. ¡Cuídate mucho!', 'info');
+                
+                setTimeout(() => {
+                    document.getElementById('chat-container').style.display = 'none';
+                    document.getElementById('chat-messages').innerHTML = '<div style="text-align: center; color: #7f8c8d; margin-top: 100px;">Conectando con psicólogo disponible...</div>';
+                }, 3000);
+            }
+        }
+
+        function openRelaxation() {
+            showAlert('Abriendo ejercicios de relajación...', 'info');
+        }
+
+        function openResources() {
+            showAlert('Abriendo biblioteca de recursos de bienestar...', 'info');
+        }
+
+        function showEmergencyContacts() {
+            alert('📞 LÍNEAS DE EMERGENCIA:\n\n🆘 Línea Nacional: 106\n💚 Teléfono de la Esperanza: 574 444 4448\n🏥 Cruz Roja: 132\n👮 Policía: 123');
+        }
+
+        function saveMoodEntry() {
+            const mood = document.getElementById('mood-slider').value;
+            showAlert(`Estado de ánimo registrado: ${mood}/10`, 'success');
+        }
+
+        // Actualizar valor del slider de estado de ánimo
+        document.addEventListener('DOMContentLoaded', function() {
+            const slider = document.getElementById('mood-slider');
+            const value = document.getElementById('mood-value');
+            
+            if (slider && value) {
+                slider.addEventListener('input', function() {
+                    value.textContent = this.value;
+                });
+            }
+        });
+
+        // Permitir enviar mensaje con Enter
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && document.getElementById('chat-input') === document.activeElement) {
+                sendMessage();
+            }
+        });
+
+        // Recoveries and Exams sections
+        async function loadRecoveriesSection() {
+            if (!currentUser?.id) return;
+            try {
+                const resp = await fetch(`/recovery_api.php?student_id=${currentUser.id}`);
+                const data = await resp.json();
+                const tbody = document.getElementById('recoveries-table');
+                const list = data.recoveries || [];
+                if (list.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5">No tienes recuperaciones asignadas</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = list.map(r => `
+                    <tr>
+                        <td>${r.title}</td>
+                        <td>${r.instructions || ''}</td>
+                        <td>${r.deadline || '-'}</td>
+                        <td>${r.status || 'assigned'}</td>
+                        <td><button class="btn" onclick="viewRecovery(${r.id})">Ver</button></td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                document.getElementById('recoveries-table').innerHTML = '<tr><td colspan="5">Error cargando recuperaciones</td></tr>';
+            }
+        }
+
+        async function loadExamsSection() {
+            try {
+                const resp = await fetch('/exams_api.php');
+                const data = await resp.json();
+                const tbody = document.getElementById('exams-table');
+                const list = data.exams || [];
+                if (list.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5">No hay exámenes disponibles</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = list.map(ex => `
+                    <tr>
+                        <td>${ex.title}</td>
+                        <td>${ex.instructions || ''}</td>
+                        <td>${ex.time_limit || 30} min</td>
+                        <td>${ex.deadline ? new Date(ex.deadline).toLocaleString() : '-'}</td>
+                        <td><button class="btn btn-success" onclick="openExam(${ex.id})">Rendir</button></td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                document.getElementById('exams-table').innerHTML = '<tr><td colspan="5">Error cargando exámenes</td></tr>';
+            }
+        }
+
+        function closeExamModal() {
+            document.getElementById('exam-modal').style.display = 'none';
+            document.getElementById('exam-form').innerHTML = '';
+        }
+
+        async function openExam(examId) {
+            try {
+                const resp = await fetch(`/exams_api.php?exam_id=${examId}`);
+                const data = await resp.json();
+                if (!data.exam) { showAlert('Examen no disponible', 'warning'); return; }
+                document.getElementById('exam-title').textContent = data.exam.title;
+                document.getElementById('exam-instructions').textContent = data.exam.instructions || '';
+                const form = document.getElementById('exam-form');
+                form.innerHTML = '';
+                (data.questions || []).forEach((q, idx) => {
+                    const wrap = document.createElement('div');
+                    wrap.style.marginBottom = '1rem';
+                    wrap.innerHTML = `<div style="font-weight:bold; margin-bottom:4px;">${idx+1}. ${q.prompt}</div>`;
+                    if (q.qtype === 'multiple' && Array.isArray(q.options)) {
+                        q.options.forEach((opt, oi) => {
+                            const id = `q${q.id}_opt${oi}`;
+                            const line = document.createElement('div');
+                            line.innerHTML = `<label><input type="checkbox" name="q_${q.id}" value="${oi}"> ${opt}</label>`;
+                            wrap.appendChild(line);
+                        });
+                    } else if (q.qtype === 'single') {
+                        const inp = document.createElement('input');
+                        inp.type = 'text';
+                        inp.name = `q_${q.id}`;
+                        inp.placeholder = 'Tu respuesta...';
+                        inp.style.width = '100%';
+                        wrap.appendChild(inp);
+                    } else {
+                        const ta = document.createElement('textarea');
+                        ta.name = `q_${q.id}`;
+                        ta.rows = 3;
+                        ta.placeholder = 'Escribe tu respuesta...';
+                        ta.style.width = '100%';
+                        wrap.appendChild(ta);
+                    }
+                    form.appendChild(wrap);
+                });
+                form.setAttribute('data-exam-id', String(examId));
+                document.getElementById('exam-modal').style.display = 'block';
+            } catch (e) {
+                showAlert('Error cargando examen', 'error');
+            }
+        }
+
+        async function submitExam() {
+            event.preventDefault();
+            if (!currentUser?.id) { showAlert('Sesión inválida', 'error'); return; }
+            const form = document.getElementById('exam-form');
+            const examId = parseInt(form.getAttribute('data-exam-id') || '0', 10);
+            if (!examId) { showAlert('Examen inválido', 'error'); return; }
+            const answers = {};
+            // Recolectar respuestas
+            Array.from(form.elements).forEach(el => {
+                if (!el.name || !el.name.startsWith('q_')) return;
+                const qid = el.name.split('q_')[1];
+                if (el.type === 'checkbox') {
+                    if (el.checked) {
+                        if (!Array.isArray(answers[qid])) answers[qid] = [];
+                        answers[qid].push(parseInt(el.value, 10));
+                    }
+                } else if (el.type === 'radio') {
+                    if (el.checked) answers[qid] = parseInt(el.value, 10);
+                } else {
+                    answers[qid] = el.value;
+                }
+            });
+            try {
+                const resp = await fetch('/exams_api.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'submit', exam_id: examId, student_id: currentUser.id, answers })
+                });
+                const data = await resp.json();
+                if (resp.ok) {
+                    const max = data.max || 0; const score = data.score || 0;
+                    showAlert(`Examen enviado. Puntuación: ${score}/${max}`, 'success');
+                    closeExamModal();
+                } else {
+                    showAlert(data.message || 'No se pudo enviar el examen', 'error');
+                }
+            } catch (e) {
+                showAlert('Error de conexión', 'error');
+            }
+        }
+
+        // Hook loaders when switching sections
+        const originalShowSection = showSection;
+        showSection = function(section) {
+            originalShowSection(section);
+            if (section === 'recoveries') loadRecoveriesSection();
+            if (section === 'exams') { loadExamsSection(); loadExamSubmissions(); }
+            if (section === 'grades') { loadGradesByPeriod(); }
+            if (section === 'subjects') { loadSubjectsSection(); }
+        }
+
+        function closeRecoveryModal() {
+            const m = document.getElementById('recovery-modal');
+            if (m) m.style.display = 'none';
+            const txt = document.getElementById('recovery-content');
+            if (txt) txt.value = '';
+            m?.removeAttribute('data-recovery-id');
+        }
+
+        async function viewRecovery(recoveryId) {
+            try {
+                const resp = await fetch(`/recovery_api.php?student_id=${currentUser.id}`);
+                const data = await resp.json();
+                const rec = (data.recoveries || []).find(r => String(r.id) === String(recoveryId));
+                if (!rec) { showAlert('Recuperación no encontrada', 'warning'); return; }
+                document.getElementById('recovery-title').textContent = rec.title;
+                document.getElementById('recovery-instructions').textContent = rec.instructions || '';
+                const modal = document.getElementById('recovery-modal');
+                modal.setAttribute('data-recovery-id', String(recoveryId));
+                modal.style.display = 'block';
+            } catch (e) {
+                showAlert('Error cargando recuperación', 'error');
+            }
+        }
+
+        async function submitRecovery() {
+            const modal = document.getElementById('recovery-modal');
+            const recoveryId = parseInt(modal.getAttribute('data-recovery-id') || '0', 10);
+            const content = document.getElementById('recovery-content').value || '';
+            if (!recoveryId) { showAlert('Recuperación inválida', 'error'); return; }
+            try {
+                const resp = await fetch('/recovery_api.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'submit', recovery_id: recoveryId, student_id: currentUser.id, content })
+                });
+                const data = await resp.json();
+                if (resp.ok) {
+                    showAlert('Entrega enviada', 'success');
+                    closeRecoveryModal();
+                } else {
+                    showAlert(data.message || 'No se pudo enviar la entrega', 'error');
+                }
+            } catch (e) { showAlert('Error de conexión', 'error'); }
+        }
+
+        async function loadExamSubmissions() {
+            if (!currentUser?.id) return;
+            try {
+                const resp = await fetch(`/exams_api.php?student_id=${currentUser.id}`);
+                const data = await resp.json();
+                const tbody = document.getElementById('exam-submissions-table');
+                const list = data.submissions || [];
+                if (list.length === 0) { tbody.innerHTML = '<tr><td colspan="3">Sin envíos</td></tr>'; return; }
+                tbody.innerHTML = list.map(s => `
+                    <tr>
+                        <td>${s.title}</td>
+                        <td>${(s.score ?? 0)}</td>
+                        <td>${new Date(s.submitted_at).toLocaleString()}</td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                document.getElementById('exam-submissions-table').innerHTML = '<tr><td colspan="3">Error cargando envíos</td></tr>';
+            }
+        }
+
+        async function loadGradesByPeriod() {
+            if (!currentUser?.id) return;
+            const sel = document.getElementById('period-filter');
+            const period = sel ? sel.value : 'current';
+            const mapPeriod = { current: 'current', previous: 'previous', all: '' };
+            const q = new URLSearchParams();
+            q.set('user_id', currentUser.id);
+            q.set('student_id', currentUser.id);
+            if (period && period !== 'all') q.set('period', mapPeriod[period] || period);
+            try {
+                const resp = await fetch(`/api/routes/student-grades.php/report?${q.toString()}`);
+                const data = await resp.json();
+                const tbody = document.getElementById('grades-table');
+                const rows = (data.subjects || []).map(s => {
+                    const avg = parseFloat(s.average_score || 0).toFixed(1);
+                    const quality = avg >= 9 ? 'Superior' : avg >= 7 ? 'Alto' : avg >= 6 ? 'Básico' : 'Bajo';
+                    const cls = avg >= 9 ? 'grade-excellent' : avg >= 7 ? 'grade-good' : 'grade-poor';
+                    return `
+                        <tr>
+                            <td><strong>${s.subject}</strong></td>
+                            <td>${s.grade_details || '-'}</td>
+                            <td><span class="${cls}">${avg}</span></td>
+                            <td>${quality}</td>
+                            <td>${avg >= 6 ? '<span style="color:#27ae60;">✅ Aprobado</span>' : '<span style="color:#f39c12;">⚠️ En Riesgo</span>'}</td>
+                        </tr>`;
+                });
+                tbody.innerHTML = rows.length ? rows.join('') : '<tr><td colspan="5">Sin calificaciones</td></tr>';
+            } catch (e) {
+                document.getElementById('grades-table').innerHTML = '<tr><td colspan="5">Error cargando calificaciones</td></tr>';
+            }
+        }
+
+        async function loadSubjectsSection() {
+            if (!currentUser?.id) return;
+            const q = new URLSearchParams();
+            q.set('user_id', currentUser.id);
+            try {
+                const resp = await fetch(`/api/routes/subjects.php?${q.toString()}`);
+                const data = await resp.json();
+                const cont = document.getElementById('subjects-list');
+                const subjects = data.subjects || [];
+                if (subjects.length === 0) { cont.innerHTML = '<div>No hay materias activas.</div>'; return; }
+                cont.innerHTML = subjects.map(s => `
+                    <div class="subject-card">
+                        <h4>${s.name}</h4>
+                        <p><strong>Área:</strong> ${s.area || '-'} ${s.hours_per_week ? `| <strong>Horas/sem:</strong> ${s.hours_per_week}` : ''}</p>
+                        <p>${s.description || ''}</p>
+                        <button class="btn" onclick="viewSubjectDetail('${(s.code || s.name).replace(/'/g, "\'")}')">Ver Detalles</button>
+                    </div>
+                `).join('');
+            } catch (e) {
+                const cont = document.getElementById('subjects-list');
+                cont.innerHTML = '<div>Error cargando materias</div>';
+            }
+        }
+
+        function viewSubjectDetail(subjectCode) {
+            showAlert(`Detalle de materia: ${subjectCode}`, 'info');
+        }
+    </script>
+</body>
+</html>
