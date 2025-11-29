@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyMate - Panel Administrador</title>
+    <link rel="stylesheet" href="admin_dashboard.css?v=20251104-02">
+</head>
+<body>
+    <div class="header">
+        <h1>StudyMate - Panel Administrador</h1>
+        <div>
+            <span id="user-info">Cargando...</span>
+            <button class="btn" onclick="openCommunication()">Comunicación</button>
+            <button class="btn" onclick="logout()">Cerrar Sesión</button>
+        </div>
+    </div>
+
+    <div class="nav">
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showSection('dashboard', event)">Dashboard</button>
+            <button class="nav-tab" onclick="showSection('students', event)">Estudiantes</button>
+            <button class="nav-tab" onclick="showSection('teachers', event)">Docentes</button>
+            <button class="nav-tab" onclick="showSection('academic', event)">Académico</button>
+            <button class="nav-tab" onclick="showSection('morosity', event)">Morosidad</button>
+            <button class="nav-tab" onclick="showSection('settings', event)">Configuración</button>
+            <button class="nav-tab" onclick="showSection('wellness', event)">Acompañamiento</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="alerts"></div>
+
+        <!-- Dashboard Section -->
+        <div id="dashboard-section" class="section active">
+            <h2>Resumen Institucional</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="total-students">0</div>
+                    <div class="stat-label">Estudiantes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="total-teachers">0</div>
+                    <div class="stat-label">Docentes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="overdue-count">0</div>
+                    <div class="stat-label">Estudiantes en Mora</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="total-debt">$0</div>
+                    <div class="stat-label">Cartera Vencida</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Students Section -->
+        <div id="students-section" class="section">
+            <h2>Gestión de Estudiantes</h2>
+            
+            <div class="subsection">
+                <h3>Acciones Rápidas</h3>
+                <button class="btn btn-success" onclick="addNewStudent()">Nuevo Estudiante</button>
+                <button class="btn" onclick="importStudents()">Importar Excel</button>
+                <button class="btn btn-warning" onclick="generateStudentCards()">Generar Carnés</button>
+                <button class="btn" onclick="exportStudentList()">Exportar Lista</button>
+            </div>
+            
+            <div class="subsection">
+                <h3>Filtros y Búsqueda</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Buscar Estudiante</label>
+                        <input type="text" id="student-search" placeholder="Nombre, email o documento">
+                    </div>
+                    <div class="form-group">
+                        <label>Filtrar por Grado</label>
+                        <select id="student-grade-filter">
+                            <option value="">Todos los grados</option>
+                            <option value="6">6°</option>
+                            <option value="7">7°</option>
+                            <option value="8">8°</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Estado</label>
+                        <select id="student-status-filter">
+                            <option value="">Todos</option>
+                            <option value="active">Activos</option>
+                            <option value="inactive">Inactivos</option>
+                            <option value="suspended">Suspendidos</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn" onclick="filterStudents()">Buscar</button>
+            </div>
+
+            <div class="subsection">
+                <h3>Estudiantes de la Institución</h3>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="select-all-students"></th>
+                                <th>Estudiante</th>
+                                <th>Documento</th>
+                                <th>Grado</th>
+                                <th>Estado Académico</th>
+                                <th>Estado Financiero</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="students-table">
+                            <tr><td colspan="7">Cargando estudiantes...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-1">
+                    <button class="btn" onclick="bulkStudentActions()">Acciones Masivas</button>
+                    <button class="btn btn-warning" onclick="sendBulkNotifications()">Notificar Seleccionados</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Teachers Section -->
+        <div id="teachers-section" class="section">
+            <h2>Gestión de Docentes</h2>
+            
+            <div class="subsection">
+                <h3>Acciones Docentes</h3>
+                <button class="btn btn-success" onclick="addNewTeacher()">Nuevo Docente</button>
+                <button class="btn" onclick="assignSubjects()">Asignar Materias</button>
+                <button class="btn btn-warning" onclick="teacherSchedule()">Horarios</button>
+                <button class="btn" onclick="teacherReports()">Reportes Docentes</button>
+            </div>
+
+            <div class="subsection">
+                <h3>Docentes de la Institución</h3>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Docente</th>
+                                <th>Documento</th>
+                                <th>Materias Asignadas</th>
+                                <th>Estudiantes</th>
+                                <th>Horario</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teachers-table">
+                            <tr><td colspan="7">Cargando docentes...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="subsection">
+                <h3>Evaluación Docente</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Período de Evaluación</label>
+                        <select id="evaluation-period">
+                            <option value="current">Período Actual</option>
+                            <option value="previous">Período Anterior</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn" onclick="generateTeacherEvaluation()">Generar Evaluaciones</button>
+                <button class="btn btn-primary" onclick="viewEvaluationResults()">Ver Resultados</button>
+            </div>
+        </div>
+
+        <!-- Academic Section -->
+        <div id="academic-section" class="section">
+            <h2>Gestión Académica</h2>
+            
+            <div class="subsection">
+                <h3>Configuración Académica</h3>
+                <button class="btn btn-success" onclick="manageSubjects()">Gestionar Materias</button>
+                <button class="btn" onclick="manageGrades()">Gestionar Grados</button>
+                <button class="btn btn-warning" onclick="academicCalendar()">Calendario Académico</button>
+                <button class="btn" onclick="gradingSystem()">Sistema de Calificación</button>
+            </div>
+            
+            <div class="subsection">
+                <h3>Períodos Académicos</h3>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Período</th>
+                                <th>Fecha Inicio</th>
+                                <th>Fecha Fin</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Primer Bimestre 2024</strong></td>
+                                <td>01/02/2024</td>
+                                <td>30/04/2024</td>
+                                <td><span class="text-success">Activo</span></td>
+                                <td><button class="btn" onclick="editPeriod(1)">Editar</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <button class="btn btn-success" onclick="addAcademicPeriod()">Nuevo Período</button>
+            </div>
+        </div>
+        
+        <!-- Settings Section -->
+        <div id="settings-section" class="section">
+            <h2>Configuración Institucional</h2>
+            
+            <div class="subsection">
+                <h3>Información de la Institución</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Nombre de la Institución</label>
+                        <input type="text" id="institution-name" value="Demo School">
+                    </div>
+                    <div class="form-group">
+                        <label>NIT/RUT</label>
+                        <input type="text" id="institution-nit" value="123456789-0">
+                    </div>
+                    <div class="form-group">
+                        <label>Teléfono</label>
+                        <input type="text" id="institution-phone" value="+57 300 123 4567">
+                    </div>
+                    <div class="form-group">
+                        <label>Email Institucional</label>
+                        <input type="email" id="institution-email" value="info@demoschool.edu.co">
+                    </div>
+                    <div class="form-group">
+                        <label>Dirección</label>
+                        <input type="text" id="institution-address" value="Calle 123 #45-67">
+                    </div>
+                    <div class="form-group">
+                        <label>Ciudad</label>
+                        <input type="text" id="institution-city" value="Bogotá">
+                    </div>
+                </div>
+                <button class="btn btn-success" onclick="saveInstitutionInfo()">Guardar Información</button>
+            </div>
+            
+            <div class="subsection">
+                <h3>Configuraciones del Sistema</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Año Lectivo</label>
+                        <select id="academic-year">
+                            <option value="2024">2024</option>
+                            <option value="2025">2025</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Moneda</label>
+                        <select id="currency">
+                            <option value="COP">Peso Colombiano (COP)</option>
+                            <option value="USD">Dólar (USD)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Zona Horaria</label>
+                        <select id="timezone">
+                            <option value="America/Bogota">Bogotá (GMT-5)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="subsection">
+                <h3>Notificaciones y Comunicaciones</h3>
+                <div class="form-group">
+                    <label><input type="checkbox" checked> Notificaciones por Email</label>
+                </div>
+                <div class="form-group">
+                    <label><input type="checkbox" checked> Notificaciones SMS</label>
+                </div>
+                <div class="form-group">
+                    <label><input type="checkbox"> Notificaciones Push</label>
+                </div>
+                <button class="btn" onclick="saveNotificationSettings()">Guardar Configuración</button>
+            </div>
+            
+            <div class="subsection">
+                <h3>Respaldos y Mantenimiento</h3>
+                <button class="btn btn-success" onclick="createBackup()">Crear Respaldo</button>
+                <button class="btn btn-warning" onclick="restoreBackup()">Restaurar Respaldo</button>
+                <button class="btn" onclick="viewLogs()">Ver Logs</button>
+                <button class="btn btn-danger" onclick="resetSystem()">Reiniciar Sistema</button>
+            </div>
+        </div>
+
+        <!-- Morosity Section -->
+        <div id="morosity-section" class="section">
+            <h2>Gestión de Morosidad</h2>
+            
+            <div class="legal-notice">
+                <h4>Marco Legal Colombiano</h4>
+                <p><strong>Art. 22 Reglamento Centros Docentes:</strong> Notificación 15 días previos • <strong>Suspensión:</strong> Solo al final de período • <strong>Derecho Fundamental:</strong> Educación protegida</p>
+            </div>
+
+            <div class="subsection">
+                <h3>Estudiantes en Mora</h3>
+                <button class="btn" onclick="loadOverdueStudents()">Actualizar Lista</button>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Estudiante</th>
+                                <th>Facturas Vencidas</th>
+                                <th>Deuda Total</th>
+                                <th>Días Vencido</th>
+                                <th>Estado Legal</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="overdue-table">
+                            <tr><td colspan="6">Cargando estudiantes en mora...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3>Notificaciones Legales</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Estudiante</label>
+                        <select id="notification-student">
+                            <option value="">Seleccionar estudiante</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo de Notificación</label>
+                        <select id="notification-type">
+                            <option value="first_notice">Primera Notificación</option>
+                            <option value="final_notice">Notificación Final</option>
+                            <option value="suspension_notice">Aviso de Suspensión</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn btn-warning" onclick="sendLegalNotification()">Enviar Notificación (15 días)</button>
+            </div>
+
+            <div class="subsection">
+                <h3>Acuerdos de Pago</h3>
+                <p class="legal-notice">Los acuerdos de pago protegen el derecho fundamental a la educación</p>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Estudiante</label>
+                        <select id="agreement-student">
+                            <option value="">Seleccionar estudiante</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Deuda Total</label>
+                        <input type="number" id="agreement-debt" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>Pago Mensual</label>
+                        <input type="number" id="agreement-monthly" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha Inicio</label>
+                        <input type="date" id="agreement-start">
+                    </div>
+                </div>
+                <button class="btn btn-success" onclick="createPaymentAgreement()">Crear Acuerdo</button>
+            </div>
+        </div>
+
+
+
+        <!-- Wellness Section -->
+        <div id="wellness-section" class="section">
+            <h2>Sistema de Acompañamiento Escolar</h2>
+            
+            <div class="subsection">
+                <h3>Sistema de Chat de Apoyo Psicológico</h3>
+                <div class="alert alert-warning">
+                    <strong>Sistema Bandera Activado:</strong> Chat de apoyo psicológico disponible 24/7 para estudiantes en crisis
+                </div>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Estado del Sistema</label>
+                        <select id="chat-system-status">
+                            <option value="active" selected>Activo</option>
+                            <option value="maintenance">Mantenimiento</option>
+                            <option value="inactive">Inactivo</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Psicólogos Disponibles</label>
+                        <input type="number" id="available-psychologists" value="3" min="1">
+                    </div>
+                </div>
+                
+                <button class="btn btn-success" onclick="activatePsychChat()">Activar Chat Psicológico</button>
+                <button class="btn btn-warning" onclick="viewChatSessions()">Ver Sesiones Activas</button>
+                <button class="btn" onclick="managePsychologists()">Gestionar Psicólogos</button>
+                <button class="btn btn-danger" onclick="emergencyProtocol()">Protocolo de Emergencia</button>
+            </div>
+            
+            <div class="subsection">
+                <h3>Bienestar Emocional</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="wellness-entries">127</div>
+                        <div class="stat-label">Registros de Bienestar</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="avg-mood">7.2</div>
+                        <div class="stat-label">Estado de Ánimo Promedio</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="alerts-count">3</div>
+                        <div class="stat-label">Alertas Activas</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="chat-sessions">45</div>
+                        <div class="stat-label">Sesiones de Chat</div>
+                    </div>
+                </div>
+                
+                <button class="btn" onclick="viewWellnessReport()">Ver Reporte Completo</button>
+                <button class="btn btn-warning" onclick="viewAlerts()">Ver Alertas</button>
+                <button class="btn btn-success" onclick="exportWellnessData()">Exportar Datos</button>
+            </div>
+            
+            <div class="subsection">
+                <h3>Alertas de Bienestar</h3>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Estudiante</th>
+                            <th>Tipo de Alerta</th>
+                            <th>Severidad</th>
+                            <th>Fecha</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="wellness-alerts-table">
+                        <tr>
+                            <td><strong>Ana García</strong></td>
+                            <td>Estado de ánimo bajo</td>
+                            <td><span class="chip chip-warning">Medio</span></td>
+                            <td>12/12/2024</td>
+                            <td>Pendiente</td>
+                            <td>
+                                <button class="btn" onclick="reviewAlert(1)">Revisar</button>
+                                <button class="btn btn-success" onclick="contactStudent(1)">Contactar</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Carlos López</strong></td>
+                            <td>Mensaje de emergencia</td>
+                            <td><span class="chip chip-danger">Alto</span></td>
+                            <td>11/12/2024</td>
+                            <td>En seguimiento</td>
+                            <td>
+                                <button class="btn" onclick="reviewAlert(2)">Revisar</button>
+                                <button class="btn btn-warning" onclick="escalateAlert(2)">Escalar</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="subsection">
+                <h3>Gestión de Tareas y Acompañamiento</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Estudiante</label>
+                        <select id="task-student">
+                            <option value="">Seleccionar estudiante</option>
+                            <option value="1">Ana García</option>
+                            <option value="2">Carlos López</option>
+                            <option value="3">María Rodríguez</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo de Tarea</label>
+                        <select id="task-type">
+                            <option value="academic">Académica</option>
+                            <option value="emotional">Apoyo Emocional</option>
+                            <option value="behavioral">Conductual</option>
+                            <option value="family">Familiar</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Descripción de la Tarea</label>
+                    <textarea id="task-description" rows="3" placeholder="Describe la tarea de acompañamiento..."></textarea>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Fecha Límite</label>
+                        <input type="date" id="task-due-date">
+                    </div>
+                    <div class="form-group">
+                        <label>Prioridad</label>
+                        <select id="task-priority">
+                            <option value="low">Baja</option>
+                            <option value="medium">Media</option>
+                            <option value="high">Alta</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn btn-success" onclick="createSupportTask()">Crear Tarea de Acompañamiento</button>
+            </div>
+            
+            <div class="subsection">
+                <h3>Calendario de Actividades de Bienestar</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Tipo de Actividad</label>
+                        <select id="activity-type">
+                            <option value="workshop">Taller</option>
+                            <option value="counseling">Consejería</option>
+                            <option value="group_session">Sesión Grupal</option>
+                            <option value="parent_meeting">Reunión Padres</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Título</label>
+                        <input type="text" id="activity-title" placeholder="Ej: Taller de Manejo de Emociones">
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha y Hora</label>
+                        <input type="datetime-local" id="activity-datetime">
+                    </div>
+                </div>
+                <button class="btn btn-success" onclick="scheduleWellnessActivity()">Programar Actividad</button>
+                
+                <div class="mt-1">
+                    <h4>Próximas Actividades</h4>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Actividad</th>
+                                <th>Tipo</th>
+                                <th>Fecha</th>
+                                <th>Participantes</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Taller de Autoestima</strong></td>
+                                <td>Taller</td>
+                                <td>15/12/2024 10:00</td>
+                                <td>12 estudiantes</td>
+                                <td>
+                                    <button class="btn" onclick="viewActivity(1)">Ver</button>
+                                    <button class="btn btn-warning" onclick="editActivity(1)">Editar</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Consejería Individual</strong></td>
+                                <td>Consejería</td>
+                                <td>16/12/2024 14:00</td>
+                                <td>Ana García</td>
+                                <td>
+                                    <button class="btn" onclick="viewActivity(2)">Ver</button>
+                                    <button class="btn btn-warning" onclick="editActivity(2)">Editar</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="ui_components.js?v=20251104-02"></script>
+    <script src="lazy_loading.js?v=20251104-02"></script>
+    <script src="offline_manager.js?v=20251104-02"></script>
+    <script src="notifications.js?v=20251104-02"></script>
+    <script src="communication.js?v=20251104-02"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="admin_dashboard.js?v=20251104-02"></script>
+</body>
+</html>

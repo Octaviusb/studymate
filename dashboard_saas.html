@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyMate SaaS Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; }
+        .header { background: #2c3e50; color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; }
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .stat-card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .stat-number { font-size: 2rem; font-weight: bold; color: #3498db; }
+        .stat-label { color: #7f8c8d; margin-top: 0.5rem; }
+        .section { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1rem; }
+        .btn { background: #3498db; color: white; padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; }
+        .btn:hover { background: #2980b9; }
+        .btn-success { background: #27ae60; }
+        .btn-success:hover { background: #229954; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
+        .form-group input, .form-group select { width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; }
+        .table { width: 100%; border-collapse: collapse; }
+        .table th, .table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #ddd; }
+        .table th { background: #f8f9fa; font-weight: bold; }
+        .status-active { color: #27ae60; font-weight: bold; }
+        .status-trial { color: #f39c12; font-weight: bold; }
+        .alert { padding: 1rem; border-radius: 4px; margin-bottom: 1rem; }
+        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>StudyMate SaaS Dashboard</h1>
+        <div>
+            <span id="user-info">Cargando...</span>
+            <button class="btn" onclick="logout()">Cerrar Sesión</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="alerts"></div>
+
+        <!-- Stats Overview -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="total-orgs">0</div>
+                <div class="stat-label">Organizaciones</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="total-users">0</div>
+                <div class="stat-label">Usuarios Totales</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="total-classes">0</div>
+                <div class="stat-label">Clases Activas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="pending-alerts">0</div>
+                <div class="stat-label">Alertas Pendientes</div>
+            </div>
+        </div>
+
+        <!-- Create Organization -->
+        <div class="section">
+            <h2>Crear Nueva Organización</h2>
+            <form id="org-form">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label>Nombre de la Institución</label>
+                        <input type="text" id="org-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Dominio Web</label>
+                        <input type="text" id="org-domain" placeholder="ejemplo.edu.co">
+                    </div>
+                    <div class="form-group">
+                        <label>Dirección</label>
+                        <input type="text" id="org-address" placeholder="Calle 123 #45-67">
+                    </div>
+                    <div class="form-group">
+                        <label>Ciudad</label>
+                        <input type="text" id="org-city" placeholder="Bogotá">
+                    </div>
+                    <div class="form-group">
+                        <label>Departamento/Estado</label>
+                        <input type="text" id="org-state" placeholder="Cundinamarca">
+                    </div>
+                    <div class="form-group">
+                        <label>Teléfono</label>
+                        <input type="text" id="org-phone" placeholder="+57 1 234-5678">
+                    </div>
+                    <div class="form-group">
+                        <label>Email de Contacto</label>
+                        <input type="email" id="org-contact-email" placeholder="contacto@institucion.edu.co">
+                    </div>
+                    <div class="form-group">
+                        <label>Nombre del Responsable</label>
+                        <input type="text" id="org-contact-name" placeholder="María González">
+                    </div>
+                    <div class="form-group">
+                        <label>Cargo del Responsable</label>
+                        <input type="text" id="org-contact-position" placeholder="Rectora">
+                    </div>
+                    <div class="form-group">
+                        <label>Sitio Web</label>
+                        <input type="url" id="org-website" placeholder="https://institucion.edu.co">
+                    </div>
+                    <div class="form-group">
+                        <label>Plan</label>
+                        <select id="org-plan">
+                            <option value="free">Free (10 usuarios)</option>
+                            <option value="basic">Basic (50 usuarios)</option>
+                            <option value="premium">Premium (500 usuarios)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Máximo de Usuarios</label>
+                        <input type="number" id="org-max-users" value="50" min="1">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Descripción de la Institución</label>
+                    <textarea id="org-description" rows="3" placeholder="Breve descripción de la institución educativa..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-success">Crear Organización</button>
+            </form>
+        </div>
+
+        <!-- Organizations List -->
+        <div class="section">
+            <h2>Organizaciones Registradas</h2>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Ciudad</th>
+                        <th>Responsable</th>
+                        <th>Teléfono</th>
+                        <th>Plan</th>
+                        <th>Usuarios</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody id="orgs-table">
+                    <tr><td colspan="8">Cargando organizaciones...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="section">
+            <h2>Acciones Rápidas</h2>
+            <button class="btn" onclick="loadStats()">Actualizar Estadísticas</button>
+            <button class="btn" onclick="loadOrganizations()">Recargar Organizaciones</button>
+            <button class="btn" onclick="window.open('/StudyMateSaaS/test_academic_api.php', '_blank')">Probar APIs</button>
+            <button class="btn" onclick="window.open('/StudyMateSaaS/migrate_academic_system.php', '_blank')">Migrar Sistema Académico</button>
+            <button class="btn" onclick="window.open('/StudyMateSaaS/academic_admin.html', '_blank')">Panel Académico</button>
+            <button class="btn" onclick="window.open('/StudyMateSaaS/teacher_grades.html', '_blank')">Panel Docentes</button>
+            <button class="btn" onclick="window.open('/StudyMateSaaS/list_users.php', '_blank')">Ver Usuarios</button>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            loadStats();
+            loadOrganizations();
+            
+            document.getElementById('org-form').addEventListener('submit', createOrganization);
+        });
+
+        function checkAuth() {
+            const user = JSON.parse(localStorage.getItem('studymate_user') || '{}');
+            if (!user.id || user.role !== 'super_admin') {
+                alert('Acceso denegado. Solo super administradores pueden acceder.');
+                window.location.href = '/';
+                return;
+            }
+            currentUser = user;
+            document.getElementById('user-info').textContent = `${user.name} (${user.role})`;
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch(`/StudyMateSaaS/org_api.php?action=stats&user_id=${currentUser.id}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('total-users').textContent = data.total_users || 0;
+                    document.getElementById('total-classes').textContent = data.total_classes || 0;
+                    document.getElementById('pending-alerts').textContent = data.pending_alerts || 0;
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        async function loadOrganizations() {
+            try {
+                const response = await fetch(`/StudyMateSaaS/org_api.php?action=list&user_id=${currentUser.id}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('total-orgs').textContent = data.organizations.length;
+                    
+                    const tbody = document.getElementById('orgs-table');
+                    tbody.innerHTML = '';
+                    
+                    data.organizations.forEach(org => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${org.id}</td>
+                            <td><strong>${org.name}</strong><br><small>${org.domain || 'Sin dominio'}</small></td>
+                            <td>${org.city || 'N/A'}</td>
+                            <td>${org.contact_name || 'N/A'}<br><small>${org.contact_position || ''}</small></td>
+                            <td>${org.phone || 'N/A'}</td>
+                            <td>${org.plan.toUpperCase()}</td>
+                            <td>${org.user_count}/${org.max_users}</td>
+                            <td><span class="status-${org.status}">${org.status.toUpperCase()}</span></td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                } else {
+                    showAlert('Error cargando organizaciones: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showAlert('Error de conexión: ' + error.message, 'error');
+            }
+        }
+
+        async function createOrganization(e) {
+            e.preventDefault();
+            
+            const orgData = {
+                name: document.getElementById('org-name').value,
+                domain: document.getElementById('org-domain').value,
+                address: document.getElementById('org-address').value,
+                city: document.getElementById('org-city').value,
+                state: document.getElementById('org-state').value,
+                phone: document.getElementById('org-phone').value,
+                contact_email: document.getElementById('org-contact-email').value,
+                contact_name: document.getElementById('org-contact-name').value,
+                contact_position: document.getElementById('org-contact-position').value,
+                website: document.getElementById('org-website').value,
+                description: document.getElementById('org-description').value,
+                plan: document.getElementById('org-plan').value,
+                max_users: parseInt(document.getElementById('org-max-users').value),
+                user_id: currentUser.id
+            };
+
+            try {
+                const response = await fetch('/StudyMateSaaS/org_api.php?action=create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(orgData)
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showAlert('Organización creada exitosamente', 'success');
+                    document.getElementById('org-form').reset();
+                    loadOrganizations();
+                    loadStats();
+                } else {
+                    showAlert('Error: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showAlert('Error de conexión: ' + error.message, 'error');
+            }
+        }
+
+        function showAlert(message, type) {
+            const alertsDiv = document.getElementById('alerts');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            alertsDiv.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+
+        function logout() {
+            localStorage.removeItem('studymate_user');
+            localStorage.removeItem('studymate_token');
+            window.location.href = '/';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyMate - Administración Académica</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; }
+        .header { background: #2c3e50; color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; }
+        .nav { background: #34495e; padding: 0.5rem 1rem; }
+        .nav-tabs { display: flex; gap: 1rem; }
+        .nav-tab { background: none; border: none; color: white; padding: 0.5rem 1rem; cursor: pointer; border-radius: 4px; }
+        .nav-tab.active { background: #3498db; }
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+        .section { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1rem; display: none; }
+        .section.active { display: block; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; }
+        .btn { background: #3498db; color: white; padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; }
+        .btn:hover { background: #2980b9; }
+        .btn-success { background: #27ae60; }
+        .btn-danger { background: #e74c3c; }
+        .table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        .table th, .table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #ddd; }
+        .table th { background: #f8f9fa; }
+        .alert { padding: 1rem; border-radius: 4px; margin-bottom: 1rem; }
+        .alert-success { background: #d4edda; color: #155724; }
+        .alert-error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>StudyMate - Administración Académica</h1>
+        <div>
+            <span id="user-info">Cargando...</span>
+            <button class="btn" onclick="logout()">Cerrar Sesión</button>
+        </div>
+    </div>
+
+    <div class="nav">
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showSection('subjects')">Asignaturas</button>
+            <button class="nav-tab" onclick="showSection('grades')">Grados</button>
+            <button class="nav-tab" onclick="showSection('achievements')">Logros</button>
+            <button class="nav-tab" onclick="showSection('reports')">Informes</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="alerts"></div>
+
+        <!-- Sección Asignaturas -->
+        <div id="subjects-section" class="section active">
+            <h2>Gestión de Asignaturas</h2>
+            <form id="subject-form">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Nombre de la Asignatura</label>
+                        <input type="text" id="subject-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Código</label>
+                        <input type="text" id="subject-code">
+                    </div>
+                    <div class="form-group">
+                        <label>Área</label>
+                        <select id="subject-area">
+                            <option value="Ciencias Exactas">Ciencias Exactas</option>
+                            <option value="Humanidades">Humanidades</option>
+                            <option value="Ciencias">Ciencias</option>
+                            <option value="Idiomas">Idiomas</option>
+                            <option value="Deportes">Deportes</option>
+                            <option value="Artes">Artes</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Horas por Semana</label>
+                        <input type="number" id="subject-hours" value="2" min="1">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Descripción</label>
+                    <textarea id="subject-description" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-success">Crear Asignatura</button>
+            </form>
+
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Código</th>
+                        <th>Área</th>
+                        <th>Horas/Semana</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="subjects-table">
+                    <tr><td colspan="5">Cargando asignaturas...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Sección Grados -->
+        <div id="grades-section" class="section">
+            <h2>Gestión de Grados Académicos</h2>
+            <form id="grade-form">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Nombre del Grado</label>
+                        <input type="text" id="grade-name" placeholder="Ej: 6°, 7°, 8°" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Nivel</label>
+                        <select id="grade-level">
+                            <option value="primaria">Primaria</option>
+                            <option value="secundaria">Secundaria</option>
+                            <option value="media">Media</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Orden</label>
+                        <input type="number" id="grade-order" min="1" max="11">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Descripción</label>
+                    <textarea id="grade-description" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-success">Crear Grado</button>
+            </form>
+
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Nivel</th>
+                        <th>Estudiantes</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="grades-table">
+                    <tr><td colspan="4">Cargando grados...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Sección Logros -->
+        <div id="achievements-section" class="section">
+            <h2>Gestión de Logros/Indicadores</h2>
+            <form id="achievement-form">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Asignatura</label>
+                        <select id="achievement-subject" required>
+                            <option value="">Seleccionar asignatura</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Grado</label>
+                        <select id="achievement-grade" required>
+                            <option value="">Seleccionar grado</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Período</label>
+                        <select id="achievement-period" required>
+                            <option value="1">Primer Período</option>
+                            <option value="2">Segundo Período</option>
+                            <option value="3">Tercer Período</option>
+                            <option value="4">Cuarto Período</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Código</label>
+                        <input type="text" id="achievement-code">
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo de Competencia</label>
+                        <select id="achievement-type">
+                            <option value="cognitive">Cognitiva</option>
+                            <option value="procedural">Procedimental</option>
+                            <option value="attitudinal">Actitudinal</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Peso</label>
+                        <input type="number" id="achievement-weight" value="1.00" step="0.01" min="0.1" max="5">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Descripción del Logro</label>
+                    <textarea id="achievement-description" rows="3" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-success">Crear Logro</button>
+            </form>
+
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Asignatura</th>
+                        <th>Grado</th>
+                        <th>Período</th>
+                        <th>Descripción</th>
+                        <th>Tipo</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="achievements-table">
+                    <tr><td colspan="6">Cargando logros...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Sección Informes -->
+        <div id="reports-section" class="section">
+            <h2>Generación de Informes</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Tipo de Informe</label>
+                    <select id="report-type">
+                        <option value="student">Informe Individual de Estudiante</option>
+                        <option value="grade">Informe por Grado</option>
+                        <option value="subject">Informe por Asignatura</option>
+                        <option value="teacher">Informe de Docente</option>
+                        <option value="achievements">Informe de Logros</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Período</label>
+                    <select id="report-period">
+                        <option value="">Todos los períodos</option>
+                        <option value="1">Primer Período</option>
+                        <option value="2">Segundo Período</option>
+                        <option value="3">Tercer Período</option>
+                        <option value="4">Cuarto Período</option>
+                    </select>
+                </div>
+            </div>
+            <button class="btn" onclick="generateReport()">Generar Informe</button>
+            
+            <div id="report-results" style="margin-top: 2rem;"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let subjects = [];
+        let grades = [];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            loadSubjects();
+            loadGrades();
+            loadAchievements();
+            
+            document.getElementById('subject-form').addEventListener('submit', createSubject);
+            document.getElementById('grade-form').addEventListener('submit', createGrade);
+            document.getElementById('achievement-form').addEventListener('submit', createAchievement);
+        });
+
+        function checkAuth() {
+            const user = JSON.parse(localStorage.getItem('studymate_user') || '{}');
+            if (!user.id || !['admin', 'super_admin'].includes(user.role)) {
+                alert('Acceso denegado. Solo administradores pueden acceder.');
+                window.location.href = '/';
+                return;
+            }
+            currentUser = user;
+            document.getElementById('user-info').textContent = `${user.name} (${user.role})`;
+        }
+
+        function showSection(section) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            
+            document.getElementById(section + '-section').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        async function loadSubjects() {
+            try {
+                const response = await fetch(`/api/subjects?user_id=${currentUser.id}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    subjects = data.subjects;
+                    displaySubjects();
+                    populateSubjectSelect();
+                }
+            } catch (error) {
+                console.error('Error loading subjects:', error);
+            }
+        }
+
+        async function loadGrades() {
+            try {
+                const response = await fetch(`/api/grades?user_id=${currentUser.id}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    grades = data.grades;
+                    displayGrades();
+                    populateGradeSelect();
+                }
+            } catch (error) {
+                console.error('Error loading grades:', error);
+            }
+        }
+
+        async function loadAchievements() {
+            try {
+                const response = await fetch(`/api/achievements?user_id=${currentUser.id}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    displayAchievements(data.achievements);
+                }
+            } catch (error) {
+                console.error('Error loading achievements:', error);
+            }
+        }
+
+        function displaySubjects() {
+            const tbody = document.getElementById('subjects-table');
+            tbody.innerHTML = subjects.map(subject => `
+                <tr>
+                    <td>${subject.name}</td>
+                    <td>${subject.code || 'N/A'}</td>
+                    <td>${subject.area || 'N/A'}</td>
+                    <td>${subject.hours_per_week}</td>
+                    <td>
+                        <button class="btn btn-danger" onclick="deleteSubject(${subject.id})">Eliminar</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function displayGrades() {
+            const tbody = document.getElementById('grades-table');
+            tbody.innerHTML = grades.map(grade => `
+                <tr>
+                    <td>${grade.name}</td>
+                    <td>${grade.level || 'N/A'}</td>
+                    <td>${grade.student_count || 0}</td>
+                    <td>
+                        <button class="btn btn-danger" onclick="deleteGrade(${grade.id})">Eliminar</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function displayAchievements(achievements) {
+            const tbody = document.getElementById('achievements-table');
+            tbody.innerHTML = achievements.map(achievement => `
+                <tr>
+                    <td>${achievement.subject_name}</td>
+                    <td>${achievement.grade_name}</td>
+                    <td>Período ${achievement.period}</td>
+                    <td>${achievement.description}</td>
+                    <td>${achievement.competency_type}</td>
+                    <td>
+                        <button class="btn btn-danger" onclick="deleteAchievement(${achievement.id})">Eliminar</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function populateSubjectSelect() {
+            const select = document.getElementById('achievement-subject');
+            select.innerHTML = '<option value="">Seleccionar asignatura</option>' +
+                subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+        }
+
+        function populateGradeSelect() {
+            const select = document.getElementById('achievement-grade');
+            select.innerHTML = '<option value="">Seleccionar grado</option>' +
+                grades.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+        }
+
+        async function createSubject(e) {
+            e.preventDefault();
+            
+            const subjectData = {
+                name: document.getElementById('subject-name').value,
+                code: document.getElementById('subject-code').value,
+                area: document.getElementById('subject-area').value,
+                description: document.getElementById('subject-description').value,
+                hours_per_week: parseInt(document.getElementById('subject-hours').value),
+                user_id: currentUser.id
+            };
+
+            try {
+                const response = await fetch('/api/subjects', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(subjectData)
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showAlert('Asignatura creada exitosamente', 'success');
+                    document.getElementById('subject-form').reset();
+                    loadSubjects();
+                } else {
+                    showAlert('Error: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showAlert('Error de conexión', 'error');
+            }
+        }
+
+        async function createGrade(e) {
+            e.preventDefault();
+            
+            const gradeData = {
+                name: document.getElementById('grade-name').value,
+                level: document.getElementById('grade-level').value,
+                description: document.getElementById('grade-description').value,
+                sort_order: parseInt(document.getElementById('grade-order').value),
+                user_id: currentUser.id
+            };
+
+            try {
+                const response = await fetch('/api/grades', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(gradeData)
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showAlert('Grado creado exitosamente', 'success');
+                    document.getElementById('grade-form').reset();
+                    loadGrades();
+                } else {
+                    showAlert('Error: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showAlert('Error de conexión', 'error');
+            }
+        }
+
+        async function createAchievement(e) {
+            e.preventDefault();
+            
+            const achievementData = {
+                subject_id: parseInt(document.getElementById('achievement-subject').value),
+                grade_id: parseInt(document.getElementById('achievement-grade').value),
+                period: document.getElementById('achievement-period').value,
+                code: document.getElementById('achievement-code').value,
+                description: document.getElementById('achievement-description').value,
+                competency_type: document.getElementById('achievement-type').value,
+                weight: parseFloat(document.getElementById('achievement-weight').value),
+                user_id: currentUser.id
+            };
+
+            try {
+                const response = await fetch('/api/achievements', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(achievementData)
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showAlert('Logro creado exitosamente', 'success');
+                    document.getElementById('achievement-form').reset();
+                    loadAchievements();
+                } else {
+                    showAlert('Error: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showAlert('Error de conexión', 'error');
+            }
+        }
+
+        async function generateReport() {
+            const reportType = document.getElementById('report-type').value;
+            const period = document.getElementById('report-period').value;
+            
+            let url = `/api/reports/${reportType}?user_id=${currentUser.id}`;
+            if (period) url += `&period=${period}`;
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    displayReportResults(data, reportType);
+                } else {
+                    showAlert('Error generando informe: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showAlert('Error de conexión', 'error');
+            }
+        }
+
+        function displayReportResults(data, type) {
+            const resultsDiv = document.getElementById('report-results');
+            let html = '<h3>Resultados del Informe</h3>';
+            
+            if (type === 'achievements') {
+                html += '<table class="table"><thead><tr><th>Asignatura</th><th>Grado</th><th>Período</th><th>Descripción</th><th>Evaluaciones</th><th>Promedio</th></tr></thead><tbody>';
+                data.achievements.forEach(achievement => {
+                    html += `<tr>
+                        <td>${achievement.subject_name}</td>
+                        <td>${achievement.grade_name}</td>
+                        <td>${achievement.period}</td>
+                        <td>${achievement.description}</td>
+                        <td>${achievement.evaluations_count || 0}</td>
+                        <td>${achievement.average_score ? parseFloat(achievement.average_score).toFixed(2) : 'N/A'}</td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+            }
+            
+            resultsDiv.innerHTML = html;
+        }
+
+        function showAlert(message, type) {
+            const alerts = document.getElementById('alerts');
+            alerts.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => alerts.innerHTML = '', 5000);
+        }
+
+        function logout() {
+            localStorage.removeItem('studymate_user');
+            localStorage.removeItem('studymate_token');
+            window.location.href = '/';
+        }
+    </script>
+</body>
+</html>
